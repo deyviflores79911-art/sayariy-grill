@@ -32,16 +32,18 @@ MENU = [
         ("Tallarín de carne", "25", "tallarin"),
         ("Tallarín de pollo", "20", "tallarin"),
     ]),
-    ("Bebidas", [
-        ("Limonada", None, "limonada"),
-        ("Lima", None, "limonada"),
-        ("Maracuyá", None, "maracuya"),
-        ("Coca Cola", None, "soda"),
-        ("Fanta", None, "soda"),
-        ("Sprite", None, "soda"),
-        ("Salviet", None, "soda"),
-        ("Aquarius", None, "soda"),
+    ("Refrescos", [
+        ("Limonada", "3", "limonada"),
+        ("Lima", "3", "limonada"),
+        ("Maracuyá", "3", "maracuya"),
     ]),
+    ("Sodas", [  # la marca se elige con los botones rápidos de la nota
+        ("Soda pequeña", "5", "soda"),
+        ("Soda personal", "7", "soda"),
+        ("Soda 1 litro", "10", "soda"),
+        ("Soda 2 litros", "18", "soda"),
+    ]),
+    ("Cervezas", [("Cerveza Paceña", "20", None)]),
 ]
 
 
@@ -59,8 +61,8 @@ class Command(BaseCommand):
             for nombre, precio, foto in productos:
                 p = Producto(nombre=nombre, categoria=c,
                              precio=Decimal(precio or "0"), activo=precio is not None)
-                ruta = FOTOS / f"{foto}.jpg"
-                if ruta.exists():
+                ruta = FOTOS / f"{foto}.jpg" if foto else None
+                if ruta and ruta.exists():
                     with open(ruta, "rb") as f:
                         img = comprimir_imagen(f)
                     p.foto.save(f"{foto}.jpg", img, save=False)
@@ -72,4 +74,4 @@ class Command(BaseCommand):
         cfg.save()
         self.stdout.write(self.style.SUCCESS(
             f"Menú cargado: {Producto.objects.filter(activo=True).count()} productos activos, "
-            f"{Producto.objects.filter(activo=False).count()} bebidas sin precio (inactivas)."))
+            f"{Producto.objects.filter(activo=False).count()} inactivos."))
