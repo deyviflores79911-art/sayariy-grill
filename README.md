@@ -42,8 +42,8 @@ Los campos de stock ya existen en la base de datos.
 - Base de datos: Azure PostgreSQL `sayariy-grill-db` (Chile Central)
 - Fotos de productos: Azure Blob Storage `sayariygrillfotos`, contenedor `media`
 - Variables en Vercel → Settings → Environment Variables: `DATABASE_URL`, `DJANGO_SECRET_KEY`,
-  `AZURE_STORAGE_CONNECTION_STRING`, `DJANGO_DEBUG=0`, `DJANGO_HTTPS=1`, `DJANGO_REQUIERE_DISPOSITIVO=1`,
+  `AZURE_STORAGE_CONNECTION_STRING`, `DJANGO_DEBUG=0`, `DJANGO_HTTPS=1`, `DJANGO_REQUIERE_DISPOSITIVO=0`,
   `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS`
 - Las claves están en `secretos_azure.env` (solo en la PC, no se sube a GitHub).
 - Migraciones tras cambiar modelos: con `DATABASE_URL` definida, ejecutar `python manage.py migrate`.
-- Solo las tablets autorizadas por la administradora (menú **Equipos**) muestran el ingreso con PIN.
+- Se puede entrar desde cualquier dispositivo. (Opcional: con `DJANGO_REQUIERE_DISPOSITIVO=1` solo los equipos autorizados en el menú **Equipos** muestran el ingreso con PIN.)
