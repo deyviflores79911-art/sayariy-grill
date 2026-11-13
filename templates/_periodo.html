@@ -1,0 +1,11 @@
+<form class="filtros" method="get">
+  <div class="seg">
+    {% for clave, nombre in periodos %}{% if clave != 'rango' %}
+    <a href="?periodo={{ clave }}{{ extra }}" class="{% if periodo == clave %}activo{% endif %}">{{ nombre }}</a>
+    {% endif %}{% endfor %}
+  </div>
+  <input type="hidden" name="periodo" value="rango">
+  <input type="date" name="desde" value="{{ desde|date:'Y-m-d' }}" aria-label="Desde">
+  <input type="date" name="hasta" value="{{ hasta|date:'Y-m-d' }}" aria-label="Hasta">
+  <button class="btn btn-chico">Ver rango</button>
+</form>

@@ -1,0 +1,1 @@
+{% load pos_tags %}{% if d is None %}<span class="tenue">—</span>{% elif d == 0 %}<span class="chip verde">Cuadra exacto</span>{% elif d > 0 %}<span class="chip amarillo">Sobrante {{ d|bs }}</span>{% else %}<span class="chip rojo">Faltante {{ d|bs }}</span>{% endif %}

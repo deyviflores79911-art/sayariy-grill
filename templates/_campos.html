@@ -1,0 +1,13 @@
+{% for f in form.hidden_fields %}{{ f }}{% endfor %}
+{% if form.non_field_errors %}<ul class="mensajes"><li class="error">{{ form.non_field_errors|join:" " }}</li></ul>{% endif %}
+{% for f in form.visible_fields %}
+<div class="campo{% if f.widget_type == 'checkbox' %} campo-check{% endif %}">
+  {% if f.widget_type == 'checkbox' %}
+    <label>{{ f }} {{ f.label }}</label>
+  {% else %}
+    <label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}
+  {% endif %}
+  {% if f.help_text %}<div class="ayuda">{{ f.help_text }}</div>{% endif %}
+  {{ f.errors }}
+</div>
+{% endfor %}

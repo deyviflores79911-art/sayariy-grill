@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load pos_tags %}
+{% block titulo %}Reportes{% endblock %}
+{% block contenido %}
+<div class="acciones" style="justify-content:space-between;margin-top:0">
+  <h1 style="margin:0">Reportes</h1>
+  <a class="btn btn-verde" href="{% url 'reportes_excel' %}?{{ query }}">⬇ Exportar a Excel</a>
+</div>
+{% include "_periodo.html" %}
+<p class="tenue">Del {{ desde|date:"d/m/Y" }} al {{ hasta|date:"d/m/Y" }} · solo ventas válidas (las anuladas se muestran aparte)</p>
+
+<div class="grid-kpi">
+  <div class="kpi destacado"><div class="t">Ventas</div><div class="v">{{ total|bs }}</div></div>
+  <div class="kpi"><div class="t">N° de ventas</div><div class="v">{{ num }}</div></div>
+  <div class="kpi"><div class="t">Ticket promedio</div><div class="v">{{ ticket_promedio|bs }}</div></div>
+  <div class="kpi"><div class="t">Gastos</div><div class="v">{{ total_gastos|bs }}</div></div>
+  <div class="kpi"><div class="t">Ganancia simple</div><div class="v {% if ganancia < 0 %}rojo{% else %}verde{% endif %}">{{ ganancia|bs }}</div></div>
+  <div class="kpi"><div class="t">Anuladas</div><div class="v {% if num_anuladas %}rojo{% endif %}">{{ num_anuladas }} <span style="font-size:1rem">({{ total_anuladas|bs }})</span></div></div>
+</div>
+
+<div class="dos-col" style="margin-top:16px">
+  <div class="tarjeta">
+    <h2 style="margin-top:0">Productos más vendidos</h2>
+    {% for p in productos|slice:":15" %}
+      <div class="barra-fila"><span class="nom" title="{{ p.nombre_producto }}">{{ p.nombre_producto }}</span><div class="barra"><i style="width:{{ p.pct }}%"></i></div><span>{{ p.cantidad }} · {{ p.total|bs }}</span></div>
+    {% empty %}<p class="tenue">Sin datos.</p>{% endfor %}
+  </div>
+  <div class="tarjeta">
+    <h2 style="margin-top:0">Horas pico (n° de ventas)</h2>
+    {% for h in por_hora %}
+      <div class="barra-fila"><span class="nom">{{ h.hora }}</span><div class="barra"><i style="width:{{ h.pct }}%"></i></div><span>{{ h.num }} · {{ h.total|bs }}</span></div>
+    {% empty %}<p class="tenue">Sin datos.</p>{% endfor %}
+  </div>
+  <div class="tarjeta">
+    <h2 style="margin-top:0">Por trabajador</h2>
+    {% for t in por_trabajador %}
+      <div class="barra-fila"><span class="nom">{{ t.nombre }}</span><div class="barra"><i style="width:{{ t.pct }}%"></i></div><span>{{ t.num }} · {{ t.total|bs }}</span></div>
+    {% empty %}<p class="tenue">Sin datos.</p>{% endfor %}
+  </div>
+  <div class="tarjeta">
+    <h2 style="margin-top:0">Por método de pago</h2>
+    {% for m in por_metodo %}
+      <div class="barra-fila"><span class="nom">{{ m.metodo }}</span><div class="barra"><i style="width:{{ m.pct }}%"></i></div><span>{{ m.num }} · {{ m.total|bs }}</span></div>
+    {% empty %}<p class="tenue">Sin datos.</p>{% endfor %}
+  </div>
+  {% if por_dia|length > 1 %}
+  <div class="tarjeta">
+    <h2 style="margin-top:0">Por día</h2>
+    {% for x in por_dia %}
+      <div class="barra-fila"><span class="nom">{{ x.dia|date:"D d/m" }}</span><div class="barra"><i style="width:{{ x.pct }}%"></i></div><span>{{ x.total|bs }}</span></div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<h2>Cierres de caja del periodo</h2>
+<div class="tarjeta tabla-wrap">
+  <table>
+    <thead><tr><th>Caja</th><th>Trabajador</th><th>Cierre</th><th class="der">Vendido</th><th class="der">Esperado</th><th class="der">Declarado</th><th>Diferencia</th></tr></thead>
+    {% for t in cierres %}
+    <tr>
+      <td><a href="{% url 'cierre_detalle' t.pk %}">#{{ t.pk }}</a></td><td>{{ t.usuario }}</td><td>{{ t.cerrado_en|fecha }}</td>
+      <td class="der">{{ t.total_ventas|bs }}</td><td class="der">{{ t.efectivo_esperado|bs }}</td><td class="der">{{ t.efectivo_declarado|bs }}</td>
+      <td>{% include "_diferencia.html" with d=t.diferencia %}</td>
+    </tr>
+    {% empty %}<tr><td colspan="7" class="tenue">No hay cierres en este periodo.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

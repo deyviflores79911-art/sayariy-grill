@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load pos_tags %}
+{% block titulo %}Ventas{% endblock %}
+{% block contenido %}
+<h1>Ventas y anulaciones</h1>
+<form class="filtros" method="get">
+  <div class="seg">
+    {% for clave, nombre in periodos %}{% if clave != 'rango' %}
+    <a href="?periodo={{ clave }}&estado={{ estado }}&trabajador={{ trabajador }}" class="{% if periodo == clave %}activo{% endif %}">{{ nombre }}</a>
+    {% endif %}{% endfor %}
+  </div>
+  <input type="hidden" name="periodo" value="rango">
+  <input type="date" name="desde" value="{{ desde|date:'Y-m-d' }}" aria-label="Desde">
+  <input type="date" name="hasta" value="{{ hasta|date:'Y-m-d' }}" aria-label="Hasta">
+  <select name="estado" aria-label="Estado">
+    <option value="">Todas</option>
+    <option value="valida" {% if estado == 'valida' %}selected{% endif %}>Solo válidas</option>
+    <option value="anulada" {% if estado == 'anulada' %}selected{% endif %}>Solo anuladas</option>
+  </select>
+  <select name="trabajador" aria-label="Trabajador">
+    <option value="">Todo el personal</option>
+    {% for u in usuarios %}<option value="{{ u.pk }}" {% if trabajador == u.pk|stringformat:'s' %}selected{% endif %}>{{ u.nombre }}</option>{% endfor %}
+  </select>
+  <button class="btn btn-chico">Filtrar</button>
+</form>
+<p>{{ ventas|length }} ventas · Total válido: <strong>{{ total|bs }}</strong></p>
+<div class="tarjeta tabla-wrap">
+  <table>
+    <thead><tr><th>N°</th><th>Fecha</th><th>Trabajador</th><th>Detalle</th><th>Destino</th><th>Pago</th><th class="der">Total</th><th></th></tr></thead>
+    {% for v in ventas %}
+    <tr class="{% if v.anulada %}anulada{% endif %}">
+      <td><a href="{% url 'ticket' v.pk %}">{{ v.numero }}</a></td>
+      <td style="white-space:nowrap">{{ v.fecha_hora|fecha }}</td>
+      <td>{{ v.usuario }}</td>
+      <td style="font-size:.9rem">{% for i in v.items.all %}{{ i.cantidad }}× {{ i.nombre_producto }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+      <td>{{ v.destino }}</td>
+      <td>{{ v.get_metodo_pago_display }}</td>
+      <td class="der">{{ v.total|bs }}</td>
+      <td class="no-tachar der">
+        {% if v.anulada %}
+          <span class="chip rojo">Anulada</span>
+          <div class="tenue" style="font-size:.8rem;max-width:220px">“{{ v.motivo_anulacion }}”<br>por {{ v.anulada_por }}{% if v.autorizada_por and v.autorizada_por != v.anulada_por %}, autorizó {{ v.autorizada_por }}{% endif %} · {{ v.anulada_en|fecha }}</div>
+        {% else %}
+          <button type="button" class="btn btn-chico" data-anular="{% url 'venta_anular' v.pk %}" data-num="{{ v.numero }}">Anular</button>
+        {% endif %}
+      </td>
+    </tr>
+    {% empty %}<tr><td colspan="8" class="tenue">No hay ventas en este periodo.</td></tr>{% endfor %}
+  </table>
+</div>
+{% include "_anular.html" %}
+{% endblock %}

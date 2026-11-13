@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block titulo %}Categorías{% endblock %}
+{% block contenido %}
+<div class="acciones" style="justify-content:space-between;margin-top:0">
+  <h1 style="margin:0">Categorías</h1>
+  <a class="btn btn-rojo" href="{% url 'categoria_nueva' %}">➕ Nueva categoría</a>
+</div>
+<div class="tarjeta tabla-wrap">
+  <table>
+    <thead><tr><th>Orden</th><th>Nombre</th><th>Productos</th><th>Estado</th><th></th></tr></thead>
+    {% for c in categorias %}
+    <tr>
+      <td>{{ c.orden }}</td><td><strong>{{ c.nombre }}</strong></td><td>{{ c.n }}</td>
+      <td>{% if c.activo %}<span class="chip verde">Activa</span>{% else %}<span class="chip">Inactiva</span>{% endif %}</td>
+      <td class="der"><a class="btn btn-chico" href="{% url 'categoria_editar' c.pk %}">Editar</a></td>
+    </tr>
+    {% empty %}<tr><td colspan="5" class="tenue">No hay categorías. Cree por ejemplo: Platos, Bebidas, Refrescos, Postres.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

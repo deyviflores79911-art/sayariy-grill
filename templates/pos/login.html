@@ -1,0 +1,110 @@
+{% load static %}<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <title>Iniciar sesión · {{ config.nombre_negocio }}</title>
+  <link rel="icon" href="{% static 'img/logo.png' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+<div class="login">
+  <img class="logo-img" src="{% static 'img/logo.png' %}" alt="">
+  <div class="logo">{{ config.nombre_negocio|upper }}</div>
+  <div class="eslogan">El origen del verdadero sabor</div>
+  <div class="tenue" id="instruccion">Toque su nombre para iniciar sesión</div>
+
+  <div class="personas" id="personas">
+    {% for u in usuarios %}
+    <button type="button" class="persona{% if u.es_admin %} admin{% endif %}"
+            data-id="{{ u.pk }}" data-nombre="{{ u.nombre }}" data-admin="{{ u.es_admin|yesno:'1,0' }}">
+      <div class="av">{{ u.nombre|first|upper }}</div>
+      <div><strong>{{ u.nombre }}</strong></div>
+      <div class="rol">{{ u.es_admin|yesno:"Administradora,Trabajador" }}</div>
+    </button>
+    {% empty %}
+    <p class="tenue">No hay usuarios. Ejecute <code>python manage.py crear_admin</code>.</p>
+    {% endfor %}
+  </div>
+
+  <form method="post" class="pin-caja oculto" id="form-login" autocomplete="off">
+    {% csrf_token %}
+    <input type="hidden" name="usuario_id" id="usuario_id">
+    <h2 id="saludo" style="margin:0"></h2>
+
+    <div id="zona-pin">
+      <div class="tenue">Ingrese su PIN</div>
+      <input type="hidden" name="pin" id="pin">
+      <div class="puntos"><i></i><i></i><i></i><i></i></div>
+      <div class="teclado">
+        {% for d in "123456789" %}<button type="button" data-d="{{ d }}">{{ d }}</button>{% endfor %}
+        <button type="button" class="t-sec" id="borrar">Borrar</button>
+        <button type="button" data-d="0">0</button>
+        <button type="button" class="t-sec" id="volver1">Volver</button>
+      </div>
+    </div>
+
+    <div id="zona-pass" class="oculto">
+      <div class="campo" style="text-align:left;margin-top:16px">
+        <label for="password">Contraseña</label>
+        <input type="password" name="password" id="password" autocomplete="current-password">
+      </div>
+      <button class="btn btn-rojo btn-xl">Ingresar</button>
+      <div class="acciones" style="justify-content:center"><button type="button" class="btn-link" id="volver2">Volver</button></div>
+    </div>
+
+    {% if error %}<div class="error-login">{{ error }}</div>{% endif %}
+  </form>
+</div>
+<script>
+(function () {
+  const personas = document.getElementById('personas');
+  const form = document.getElementById('form-login');
+  const pin = document.getElementById('pin');
+  const puntos = document.querySelectorAll('.puntos i');
+  const instr = document.getElementById('instruccion');
+  const zonaPin = document.getElementById('zona-pin');
+
+  function elegir(btn) {
+    document.getElementById('usuario_id').value = btn.dataset.id;
+    document.getElementById('saludo').textContent = 'Hola, ' + btn.dataset.nombre;
+    const admin = btn.dataset.admin === '1';
+    zonaPin.classList.toggle('oculto', admin);
+    document.getElementById('zona-pass').classList.toggle('oculto', !admin);
+    personas.classList.add('oculto'); instr.classList.add('oculto');
+    form.classList.remove('oculto');
+    pin.value = ''; pintar();
+    if (admin) document.getElementById('password').focus();
+  }
+  function volver() {
+    form.classList.add('oculto'); personas.classList.remove('oculto'); instr.classList.remove('oculto');
+    const e = form.querySelector('.error-login'); if (e) e.remove();
+  }
+  function pintar() { puntos.forEach((p, i) => p.classList.toggle('lleno', i < pin.value.length)); }
+  function digito(d) {
+    if (pin.value.length >= 4) return;
+    pin.value += d; pintar();
+    if (pin.value.length === 4) setTimeout(() => form.submit(), 150);
+  }
+  function borrar() { pin.value = pin.value.slice(0, -1); pintar(); }
+
+  personas.addEventListener('click', e => { const b = e.target.closest('.persona'); if (b) elegir(b); });
+  document.querySelectorAll('.teclado [data-d]').forEach(b => b.addEventListener('click', () => digito(b.dataset.d)));
+  document.getElementById('borrar').onclick = borrar;
+  document.getElementById('volver1').onclick = volver;
+  document.getElementById('volver2').onclick = volver;
+  document.addEventListener('keydown', e => {
+    if (form.classList.contains('oculto') || zonaPin.classList.contains('oculto')) return;
+    if (/^\d$/.test(e.key)) digito(e.key);
+    if (e.key === 'Backspace') borrar();
+  });
+
+  {% if seleccionado %}
+  const sel = personas.querySelector('[data-id="{{ seleccionado }}"]');
+  if (sel) elegir(sel);
+  {% endif %}
+})();
+</script>
+</body>
+</html>

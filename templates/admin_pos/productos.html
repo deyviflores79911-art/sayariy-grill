@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load pos_tags %}
+{% block titulo %}Productos{% endblock %}
+{% block contenido %}
+<div class="acciones" style="justify-content:space-between;margin-top:0">
+  <h1 style="margin:0">Productos</h1>
+  <a class="btn btn-rojo" href="{% url 'producto_nuevo' %}">➕ Nuevo producto</a>
+</div>
+<div class="filtros">
+  <div class="seg">
+    <a href="?" class="{% if not cat %}activo{% endif %}">Todas</a>
+    {% for c in categorias %}<a href="?cat={{ c.pk }}" class="{% if cat == c.pk|stringformat:'s' %}activo{% endif %}">{{ c.nombre }}</a>{% endfor %}
+  </div>
+</div>
+<div class="tarjeta tabla-wrap">
+  <table>
+    <thead><tr><th>Foto</th><th>Nombre</th><th>Categoría</th><th class="der">Precio</th><th>Estado</th><th></th></tr></thead>
+    {% for p in productos %}
+    <tr>
+      <td>{% if p.foto %}<img src="{{ p.foto.url }}" alt="" style="width:56px;height:42px;object-fit:cover;border-radius:8px">{% else %}<span class="tenue">—</span>{% endif %}</td>
+      <td><strong>{{ p.nombre }}</strong></td>
+      <td>{{ p.categoria }}</td>
+      <td class="der">{{ p.precio|bs }}</td>
+      <td>{% if p.activo %}<span class="chip verde">Activo</span>{% else %}<span class="chip">Inactivo</span>{% endif %}</td>
+      <td class="der" style="white-space:nowrap">
+        <a class="btn btn-chico" href="{% url 'producto_editar' p.pk %}">Editar</a>
+        <form method="post" action="{% url 'producto_toggle' p.pk %}" style="display:inline">{% csrf_token %}
+          <input type="hidden" name="volver" value="{{ request.get_full_path }}">
+          <button class="btn btn-chico">{% if p.activo %}Desactivar{% else %}Activar{% endif %}</button>
+        </form>
+      </td>
+    </tr>
+    {% empty %}<tr><td colspan="6" class="tenue">No hay productos.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

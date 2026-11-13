@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block titulo %}Personal{% endblock %}
+{% block contenido %}
+<div class="acciones" style="justify-content:space-between;margin-top:0">
+  <h1 style="margin:0">Personal</h1>
+  <a class="btn btn-rojo" href="{% url 'trabajador_nuevo' %}">➕ Nueva persona</a>
+</div>
+<div class="tarjeta tabla-wrap">
+  <table>
+    <thead><tr><th>Nombre</th><th>Rol</th><th>Usuario</th><th>Estado</th><th></th></tr></thead>
+    {% for u in usuarios %}
+    <tr>
+      <td><strong>{{ u.nombre }}</strong></td>
+      <td>{{ u.get_rol_display }}</td>
+      <td class="tenue">{{ u.username }}</td>
+      <td>{% if u.is_active %}<span class="chip verde">Activo</span>{% else %}<span class="chip">Inactivo</span>{% endif %}</td>
+      <td class="der"><a class="btn btn-chico" href="{% url 'trabajador_editar' u.pk %}">Editar</a></td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+<p class="tenue">Para que alguien ya no pueda entrar, edítelo y desmarque “Activo”. Sus ventas antiguas se conservan.</p>
+{% endblock %}

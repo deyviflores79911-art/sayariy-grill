@@ -1,0 +1,46 @@
+{% load static %}<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <title>{% block titulo %}{{ config.nombre_negocio }}{% endblock %} · POS</title>
+  <link rel="icon" href="{% static 'img/logo.png' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+{% with n=request.resolver_match.url_name %}
+<header class="top">
+  <a class="marca" href="{% url 'inicio' %}"><img src="{% static 'img/logo.png' %}" alt="">{{ config.nombre_negocio }}</a>
+  <nav class="nav">
+    {% if user.es_admin %}
+      <a href="{% url 'panel' %}" class="{% if n == 'panel' %}activo{% endif %}">Inicio</a>
+    {% endif %}
+    <a href="{% url 'venta' %}" class="{% if n == 'venta' or n == 'caja_abrir' %}activo{% endif %}">Vender</a>
+    <a href="{% url 'mis_ventas' %}" class="{% if n == 'mis_ventas' %}activo{% endif %}">Mi caja</a>
+    {% if user.es_admin %}
+      <a href="{% url 'ventas' %}" class="{% if n == 'ventas' %}activo{% endif %}">Ventas</a>
+      <a href="{% url 'reportes' %}" class="{% if n == 'reportes' %}activo{% endif %}">Reportes</a>
+      <a href="{% url 'cierres' %}" class="{% if n == 'cierres' %}activo{% endif %}">Cierres</a>
+      <a href="{% url 'gastos' %}" class="{% if n == 'gastos' %}activo{% endif %}">Gastos</a>
+      <a href="{% url 'productos' %}" class="{% if 'producto' in n %}activo{% endif %}">Productos</a>
+      <a href="{% url 'categorias' %}" class="{% if 'categoria' in n %}activo{% endif %}">Categorías</a>
+      <a href="{% url 'trabajadores' %}" class="{% if 'trabajador' in n %}activo{% endif %}">Personal</a>
+      <a href="{% url 'configuracion' %}" class="{% if n == 'configuracion' %}activo{% endif %}">Ajustes</a>
+    {% endif %}
+  </nav>
+  <div class="usuario">
+    <span>👤 {{ user.nombre }}</span>
+    <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn btn-chico">Salir</button></form>
+  </div>
+</header>
+{% endwith %}
+<main class="contenido">
+  {% if messages %}
+  <ul class="mensajes">{% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}</ul>
+  {% endif %}
+  {% block contenido %}{% endblock %}
+</main>
+{% block scripts %}{% endblock %}
+</body>
+</html>

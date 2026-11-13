@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block contenido %}
+<div class="tarjeta form" style="margin:0 auto">
+  <h1>{{ titulo }}</h1>
+  {% if nota %}<p class="tenue">{{ nota }}</p>{% endif %}
+  {% if obj.foto %}<img src="{{ obj.foto.url }}" alt="" style="width:160px;border-radius:12px;margin-bottom:12px">{% endif %}
+  <form method="post" enctype="multipart/form-data">{% csrf_token %}
+    {% include "_campos.html" %}
+    <div class="acciones">
+      <button class="btn btn-rojo">Guardar</button>
+      <a class="btn" href="{% url volver %}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

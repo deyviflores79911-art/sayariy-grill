@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load pos_tags %}
+{% block titulo %}Inicio{% endblock %}
+{% block contenido %}
+<div class="acciones" style="justify-content:space-between;margin-top:0">
+  <h1 style="margin:0">Hoy, {% now "d/m/Y" %}</h1>
+  <div class="acciones" style="margin:0">
+    <a class="btn btn-rojo" href="{% url 'venta' %}">🛒 Vender</a>
+    <a class="btn" href="{% url 'gastos' %}">➕ Registrar gasto</a>
+    <a class="btn" href="{% url 'reportes' %}">📊 Reportes</a>
+  </div>
+</div>
+
+<div class="grid-kpi">
+  <div class="kpi destacado"><div class="t">Vendido hoy</div><div class="v">{{ d.total|bs }}</div></div>
+  <div class="kpi"><div class="t">Ventas</div><div class="v">{{ d.num }}</div></div>
+  <div class="kpi"><div class="t">Gastos de hoy</div><div class="v">{{ d.total_gastos|bs }}</div></div>
+  <div class="kpi"><div class="t">Ganancia simple</div><div class="v {% if d.ganancia < 0 %}rojo{% else %}verde{% endif %}">{{ d.ganancia|bs }}</div></div>
+  <div class="kpi"><div class="t">Anuladas</div><div class="v {% if d.num_anuladas %}rojo{% endif %}">{{ d.num_anuladas }}</div></div>
+</div>
+
+<div class="dos-col" style="margin-top:16px">
+  <div class="tarjeta">
+    <h2 style="margin-top:0">Cajas abiertas</h2>
+    {% for t, c in abiertas %}
+      <div class="barra-fila" style="grid-template-columns:1fr auto auto">
+        <span><strong>{{ t.usuario }}</strong> <span class="tenue">desde {{ t.abierto_en|time:"H:i" }}</span></span>
+        <span>{{ c.total|bs }}</span>
+        <a class="btn btn-chico" href="{% url 'cierre_detalle' t.pk %}">Ver</a>
+      </div>
+    {% empty %}<p class="tenue">No hay cajas abiertas.</p>{% endfor %}
+  </div>
+  <div class="tarjeta">
+    <h2 style="margin-top:0">Por método de pago</h2>
+    {% for m in d.por_metodo %}
+      <div class="barra-fila"><span class="nom">{{ m.metodo }}</span><div class="barra"><i style="width:{{ m.pct }}%"></i></div><span>{{ m.total|bs }}</span></div>
+    {% empty %}<p class="tenue">Sin ventas todavía.</p>{% endfor %}
+  </div>
+</div>
+
+<div class="tarjeta" style="margin-top:16px">
+  <div class="acciones" style="justify-content:space-between;margin:0 0 8px">
+    <h2 style="margin:0">Últimas ventas</h2>
+    <a href="{% url 'ventas' %}">Ver todas ›</a>
+  </div>
+  <div class="tabla-wrap">
+  <table>
+    <thead><tr><th>N°</th><th>Hora</th><th>Trabajador</th><th>Destino</th><th>Pago</th><th class="der">Total</th></tr></thead>
+    {% for v in ultimas %}
+    <tr class="{% if v.anulada %}anulada{% endif %}">
+      <td><a href="{% url 'ticket' v.pk %}">{{ v.numero }}</a></td><td>{{ v.fecha_hora|time:"H:i" }}</td>
+      <td>{{ v.usuario }}</td><td>{{ v.destino }}</td><td>{{ v.get_metodo_pago_display }}</td><td class="der">{{ v.total|bs }}</td>
+    </tr>
+    {% empty %}<tr><td colspan="6" class="tenue">Todavía no hay ventas hoy.</td></tr>{% endfor %}
+  </table>
+  </div>
+</div>
+{% endblock %}

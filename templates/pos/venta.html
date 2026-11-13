@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}Vender{% endblock %}
+{% block body_class %}pos-body{% endblock %}
+{% block contenido %}
+<div class="pos">
+  <section class="catalogo">
+    <div class="cats" id="cats">
+      <button type="button" class="activo" data-cat="">Todo</button>
+      {% for c in categorias %}<button type="button" data-cat="{{ c.pk }}">{{ c.nombre }}</button>{% endfor %}
+    </div>
+    <div class="prods" id="prods"></div>
+    {% if not productos %}
+      <p class="vacio">No hay productos activos.{% if user.es_admin %} <a href="{% url 'producto_nuevo' %}">Crear un producto</a>{% endif %}</p>
+    {% endif %}
+  </section>
+
+  <aside class="carrito" id="carrito">
+    <div class="carrito-cab">
+      <h2>Pedido</h2>
+      <div>
+        <button type="button" class="btn btn-chico" id="vaciar">Vaciar</button>
+        <button type="button" class="btn btn-chico" id="cerrar-carrito" style="display:none">✕ Cerrar</button>
+      </div>
+    </div>
+    <div class="lineas" id="lineas"></div>
+    <div class="carrito-pie">
+      <div class="destino">
+        <button type="button" id="btn-llevar" class="activo">🛍 Para llevar</button>
+        <button type="button" id="btn-mesa">🍽 Mesa</button>
+      </div>
+      <div class="total-fila"><span class="tenue">TOTAL</span><span class="v" id="total">Bs 0,00</span></div>
+      <button type="button" class="btn btn-rojo btn-xl" id="cobrar" disabled>COBRAR</button>
+    </div>
+  </aside>
+</div>
+
+<div class="barra-movil" id="barra-movil">
+  <div class="info"><div class="tenue" id="bm-items">0 productos</div><div class="v" id="bm-total">Bs 0,00</div></div>
+  <button type="button" class="btn btn-rojo" id="ver-pedido">Ver pedido ›</button>
+</div>
+
+<!-- Elegir mesa -->
+<dialog id="dlg-mesa">
+  <h2>¿Qué mesa?</h2>
+  <div class="mesas" id="mesas"></div>
+  <div class="acciones"><button type="button" class="btn" data-cerrar>Cancelar</button></div>
+</dialog>
+
+<!-- Nota -->
+<dialog id="dlg-nota">
+  <h2>Nota para <span id="nota-prod"></span></h2>
+  <div class="chips-nota" id="chips-nota"></div>
+  <input type="text" id="nota-txt" maxlength="200" placeholder="Escriba una nota…">
+  <div class="acciones">
+    <button type="button" class="btn btn-rojo" id="nota-ok">Guardar nota</button>
+    <button type="button" class="btn" id="nota-borrar">Quitar nota</button>
+    <button type="button" class="btn" data-cerrar>Cancelar</button>
+  </div>
+</dialog>
+
+<!-- Cobro -->
+<dialog id="dlg-cobro">
+  <h2>Cobrar · <span id="cobro-destino"></span></h2>
+  <div class="total-fila"><span class="tenue">TOTAL A COBRAR</span><span class="v" id="cobro-total"></span></div>
+  <div class="metodos" id="metodos">
+    <button type="button" data-m="efectivo">💵 Efectivo</button>
+    <button type="button" data-m="qr">📱 QR</button>
+    <button type="button" data-m="tarjeta">💳 Tarjeta</button>
+  </div>
+  <div id="zona-efectivo" class="oculto">
+    <label for="recibido"><strong>¿Cuánto le entregó el cliente?</strong></label>
+    <input type="number" id="recibido" step="0.01" min="0" inputmode="decimal" placeholder="0.00">
+    <div class="billetes" id="billetes"></div>
+    <div class="cambio" id="cambio-caja"><span>CAMBIO</span><span class="v" id="cambio">Bs 0,00</span></div>
+  </div>
+  <div class="error-login oculto" id="cobro-error"></div>
+  <div class="acciones">
+    <button type="button" class="btn btn-verde btn-xl" id="confirmar" disabled>✔ Confirmar venta</button>
+    <button type="button" class="btn" data-cerrar style="width:100%">Volver al pedido</button>
+  </div>
+</dialog>
+
+{{ productos|json_script:"datos-productos" }}
+<script>
+  window.POS = {
+    mesas: {{ num_mesas }},
+    urlConfirmar: "{% url 'venta_confirmar' %}",
+    csrf: "{{ csrf_token }}",
+    notas: ["arroz chaufa", "arroz primavera", "con tallarín", "con papitas", "sin ensalada", "sin cebolla", "sin ají", "poco picante", "bien cocido", "sin hielo"],
+  };
+</script>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/pos.js' %}"></script>{% endblock %}

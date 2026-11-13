@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load pos_tags %}
+{% block titulo %}Mi caja{% endblock %}
+{% block contenido %}
+{% if not turno %}
+  <div class="tarjeta centro">
+    <h1>No tiene una caja abierta</h1>
+    <a class="btn btn-rojo btn-xl" style="max-width:420px" href="{% url 'caja_abrir' %}">Abrir caja</a>
+  </div>
+{% else %}
+  <div class="acciones" style="justify-content:space-between;margin-top:0">
+    <h1 style="margin:0">Mi caja #{{ turno.pk }}</h1>
+    <a class="btn btn-rojo" href="{% url 'caja_cerrar' %}">🔒 Cerrar caja</a>
+  </div>
+  <p class="tenue">Abierta el {{ turno.abierto_en|fecha }} con {{ turno.monto_inicial|bs }}</p>
+  <div class="grid-kpi">
+    <div class="kpi destacado"><div class="t">Total vendido</div><div class="v">{{ c.total|bs }}</div></div>
+    <div class="kpi"><div class="t">Efectivo</div><div class="v">{{ c.efectivo|bs }}</div></div>
+    <div class="kpi"><div class="t">QR</div><div class="v">{{ c.qr|bs }}</div></div>
+    <div class="kpi"><div class="t">Tarjeta</div><div class="v">{{ c.tarjeta|bs }}</div></div>
+    <div class="kpi"><div class="t">Ventas</div><div class="v">{{ c.num_ventas }}</div></div>
+  </div>
+
+  <h2>Ventas de este turno</h2>
+  <div class="tarjeta tabla-wrap">
+    <table>
+      <thead><tr><th>N°</th><th>Hora</th><th>Detalle</th><th>Destino</th><th>Pago</th><th class="der">Total</th><th></th></tr></thead>
+      <tbody>
+      {% for v in ventas %}
+        <tr class="{% if v.anulada %}anulada{% endif %}">
+          <td>{{ v.numero }}</td>
+          <td>{{ v.fecha_hora|time:"H:i" }}</td>
+          <td style="font-size:.9rem">{% for i in v.items.all %}{{ i.cantidad }}× {{ i.nombre_producto }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+          <td>{{ v.destino }}</td>
+          <td>{{ v.get_metodo_pago_display }}</td>
+          <td class="der">{{ v.total|bs }}</td>
+          <td class="no-tachar der" style="white-space:nowrap">
+            <a class="btn btn-chico" href="{% url 'ticket' v.pk %}">Ticket</a>
+            {% if v.anulada %}<span class="chip rojo" title="{{ v.motivo_anulacion }}">Anulada</span>
+            {% else %}<button type="button" class="btn btn-chico" data-anular="{% url 'venta_anular' v.pk %}" data-num="{{ v.numero }}">Anular</button>{% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7" class="tenue centro">Todavía no hay ventas en este turno.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "_anular.html" %}
+{% endif %}
+{% endblock %}

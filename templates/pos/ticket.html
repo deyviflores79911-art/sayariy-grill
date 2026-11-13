@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load pos_tags %}
+{% block titulo %}Ticket {{ v.numero }}{% endblock %}
+{% block contenido %}
+<div class="ticket-wrap">
+  {% if not v.anulada %}<div class="listo no-print">✔ Venta registrada</div>{% endif %}
+  {% if v.cambio %}
+  <div class="cambio no-print" style="width:100%;max-width:360px"><span>ENTREGAR CAMBIO</span><span class="v">{{ v.cambio|bs }}</span></div>
+  {% endif %}
+
+  <div class="ticket">
+    <h3>{{ config.nombre_negocio }}</h3>
+    <div style="text-align:center">Ticket N° {{ v.numero }}</div>
+    <div style="text-align:center">{{ v.fecha_hora|fecha }}</div>
+    <div class="sep"></div>
+    <div><strong>{{ v.destino }}</strong> · Atendió: {{ v.usuario }}</div>
+    {% if v.anulada %}<div class="anulado">ANULADA</div>{% endif %}
+    <div class="sep"></div>
+    <table>
+      {% for i in items %}
+      <tr><td>{{ i.cantidad }} x {{ i.nombre_producto }}</td><td style="text-align:right">{{ i.subtotal|num }}</td></tr>
+      {% if i.nota %}<tr><td colspan="2" style="padding-left:12px">* {{ i.nota }}</td></tr>{% endif %}
+      {% endfor %}
+    </table>
+    <div class="sep"></div>
+    <table>
+      <tr class="tot"><td>TOTAL</td><td style="text-align:right">{{ v.total|bs }}</td></tr>
+      <tr><td>Pago</td><td style="text-align:right">{{ v.get_metodo_pago_display }}</td></tr>
+      {% if v.monto_recibido is not None %}
+      <tr><td>Recibido</td><td style="text-align:right">{{ v.monto_recibido|bs }}</td></tr>
+      <tr><td>Cambio</td><td style="text-align:right">{{ v.cambio|bs }}</td></tr>
+      {% endif %}
+    </table>
+    <div class="sep"></div>
+    <div style="text-align:center">{{ config.pie_ticket }}</div>
+    <div style="text-align:center;font-size:12px">Comprobante interno – no válido como factura</div>
+  </div>
+
+  <div class="acciones no-print" style="width:100%;max-width:360px;flex-direction:column">
+    <a class="btn btn-rojo btn-xl" href="{% url 'venta' %}">➕ Nueva venta</a>
+    <button class="btn" style="width:100%" onclick="window.print()">🖨 Imprimir ticket</button>
+  </div>
+</div>
+{% endblock %}

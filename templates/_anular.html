@@ -1,0 +1,31 @@
+<dialog id="dlg-anular">
+  <form method="post" id="form-anular">
+    {% csrf_token %}
+    <input type="hidden" name="volver" value="{{ request.get_full_path }}">
+    <h2>Anular venta N° <span id="anular-num"></span></h2>
+    <p class="tenue">La venta no se borra: queda marcada como anulada en los reportes.</p>
+    <div class="campo">
+      <label for="motivo">Motivo de la anulación</label>
+      <input type="text" name="motivo" id="motivo" required minlength="3" maxlength="300" placeholder="Ej.: cliente canceló, error al marcar…">
+    </div>
+    {% if not user.es_admin %}
+    <div class="campo">
+      <label for="pin_admin">PIN de la administradora (autoriza)</label>
+      <input type="password" name="pin_admin" id="pin_admin" required inputmode="numeric" maxlength="4" pattern="\d{4}" autocomplete="off">
+    </div>
+    {% endif %}
+    <div class="acciones">
+      <button class="btn btn-rojo">Anular venta</button>
+      <button type="button" class="btn" onclick="this.closest('dialog').close()">Cancelar</button>
+    </div>
+  </form>
+</dialog>
+<script>
+  document.querySelectorAll('[data-anular]').forEach(b => b.addEventListener('click', () => {
+    const f = document.getElementById('form-anular');
+    f.action = b.dataset.anular;
+    document.getElementById('anular-num').textContent = b.dataset.num;
+    f.reset();
+    document.getElementById('dlg-anular').showModal();
+  }));
+</script>

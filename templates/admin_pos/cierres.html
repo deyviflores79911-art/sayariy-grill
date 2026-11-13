@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load pos_tags %}
+{% block titulo %}Cierres de caja{% endblock %}
+{% block contenido %}
+<h1>Cierres de caja</h1>
+{% include "_periodo.html" %}
+<div class="tarjeta tabla-wrap">
+  <table>
+    <thead><tr><th>Caja</th><th>Trabajador</th><th>Apertura</th><th>Cierre</th><th class="der">Vendido</th><th class="der">Esperado</th><th class="der">Declarado</th><th>Diferencia</th><th></th></tr></thead>
+    {% for t in turnos %}
+    <tr>
+      <td>#{{ t.pk }}</td>
+      <td>{{ t.usuario }}</td>
+      <td style="white-space:nowrap">{{ t.abierto_en|fecha }}</td>
+      <td style="white-space:nowrap">{% if t.cerrado_en %}{{ t.cerrado_en|fecha }}{% else %}<span class="chip amarillo">Abierta</span>{% endif %}</td>
+      <td class="der">{% if t.cerrado_en %}{{ t.total_ventas|bs }}{% else %}—{% endif %}</td>
+      <td class="der">{{ t.efectivo_esperado|bs }}</td>
+      <td class="der">{{ t.efectivo_declarado|bs }}</td>
+      <td>{% include "_diferencia.html" with d=t.diferencia %}</td>
+      <td><a class="btn btn-chico" href="{% url 'cierre_detalle' t.pk %}">Ver</a></td>
+    </tr>
+    {% empty %}<tr><td colspan="9" class="tenue">No hay cierres en este periodo.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load pos_tags %}
+{% block titulo %}Cerrar caja{% endblock %}
+{% block contenido %}
+<h1>Cerrar caja</h1>
+<p class="tenue">Caja #{{ turno.pk }} · abierta el {{ turno.abierto_en|fecha }} · {{ c.num_ventas }} ventas{% if c.num_anuladas %} · {{ c.num_anuladas }} anuladas{% endif %}</p>
+<div class="dos-col">
+  <div class="tarjeta">
+    <h2 style="margin-top:0">Lo que debería haber</h2>
+    <table>
+      <tr><td>Monto inicial</td><td class="der">{{ turno.monto_inicial|bs }}</td></tr>
+      <tr><td>+ Ventas en efectivo</td><td class="der">{{ c.efectivo|bs }}</td></tr>
+      {% if c.gastos %}<tr><td>− Gastos pagados con la caja</td><td class="der">{{ c.gastos|bs }}</td></tr>{% endif %}
+      <tr><td><strong>= Efectivo esperado</strong></td><td class="der"><strong style="font-size:1.3rem">{{ c.efectivo_esperado|bs }}</strong></td></tr>
+      <tr><td class="tenue">Ventas por QR</td><td class="der tenue">{{ c.qr|bs }}</td></tr>
+      <tr><td class="tenue">Ventas con tarjeta</td><td class="der tenue">{{ c.tarjeta|bs }}</td></tr>
+      <tr><td><strong>Total vendido</strong></td><td class="der"><strong>{{ c.total|bs }}</strong></td></tr>
+    </table>
+  </div>
+  <div class="tarjeta">
+    <h2 style="margin-top:0">Cuente su efectivo</h2>
+    <form method="post" id="f-cierre">{% csrf_token %}
+      {% include "_campos.html" %}
+      <div class="cambio" id="dif" style="display:none"><span id="dif-t"></span><span class="v" id="dif-v"></span></div>
+      <button class="btn btn-rojo btn-xl" onclick="return confirm('¿Cerrar la caja? Ya no podrá vender con esta caja.')">Cerrar caja</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  const esperado = {{ c.efectivo_esperado|stringformat:".2f" }};
+  const inp = document.getElementById('id_efectivo_declarado');
+  const caja = document.getElementById('dif');
+  const fmt = n => 'Bs ' + Math.abs(n).toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  inp.addEventListener('input', () => {
+    if (inp.value === '') { caja.style.display = 'none'; return; }
+    const d = Math.round((parseFloat(inp.value) - esperado) * 100) / 100;
+    caja.style.display = 'flex';
+    caja.classList.toggle('falta', d < 0);
+    document.getElementById('dif-t').textContent = d === 0 ? 'Cuadra exacto' : (d > 0 ? 'Sobrante' : 'Faltante');
+    document.getElementById('dif-v').textContent = d === 0 ? '✔' : fmt(d);
+  });
+})();
+</script>
+{% endblock %}

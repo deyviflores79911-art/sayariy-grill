@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block titulo %}Abrir caja{% endblock %}
+{% block contenido %}
+<div class="tarjeta form" style="margin:20px auto">
+  <h1>Abrir caja</h1>
+  <p class="tenue">Cuente el dinero con el que empieza el turno (monedas y billetes para dar cambio).</p>
+  <form method="post">{% csrf_token %}
+    {% include "_campos.html" %}
+    <button class="btn btn-rojo btn-xl">Abrir caja y empezar a vender</button>
+  </form>
+</div>
+{% endblock %}
