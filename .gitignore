@@ -7,3 +7,4 @@ staticfiles/
 respaldos/
 .secret_key
 *.jpeg
+secretos_azure.env
