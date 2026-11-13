@@ -1,3 +1,5 @@
+import hashlib
+import secrets
 from decimal import Decimal
 
 from django.conf import settings
@@ -244,3 +246,37 @@ class Gasto(models.Model):
 
     def __str__(self):
         return f"{self.descripcion} ({self.monto})"
+
+
+class Dispositivo(models.Model):
+    """Tablet o PC autorizada por la administradora para que el personal entre con PIN."""
+    COOKIE = "pos_equipo"
+
+    nombre = models.CharField(max_length=60)
+    token_hash = models.CharField(max_length=64, unique=True)
+    activo = models.BooleanField(default=True)
+    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+    creado_en = models.DateTimeField(auto_now_add=True)
+    ultimo_uso = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-activo", "nombre"]
+
+    @staticmethod
+    def hash(token):
+        return hashlib.sha256(token.encode()).hexdigest()
+
+    @classmethod
+    def crear(cls, nombre, por):
+        token = secrets.token_urlsafe(32)
+        return cls.objects.create(nombre=nombre, token_hash=cls.hash(token), creado_por=por), token
+
+    @classmethod
+    def desde_request(cls, request):
+        token = request.COOKIES.get(cls.COOKIE)
+        if not token:
+            return None
+        return cls.objects.filter(token_hash=cls.hash(token), activo=True).first()
+
+    def __str__(self):
+        return self.nombre

@@ -1,13 +1,14 @@
+import hashlib
 from functools import wraps
 
 from django.contrib import messages
-from django.contrib.auth import login, logout
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
-from ..models import Usuario
+from ..models import Dispositivo, Usuario
 
 MAX_INTENTOS = 5
 BLOQUEO_SEG = 300
@@ -88,3 +89,39 @@ def inicio(request):
     if request.user.es_admin:
         return redirect("panel")
     return redirect("venta")
+
+
+def _ip(request):
+    ip = request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip() or request.META.get("REMOTE_ADDR", "")
+    return ip.rsplit(":", 1)[0] if ip.count(":") == 1 else ip  # Azure agrega ":puerto"
+
+
+def equipo_view(request):
+    """Pantalla para equipos no autorizados: la administradora entra o autoriza el equipo."""
+    if getattr(request, "dispositivo", None):
+        return redirect("login")
+    error = None
+    if request.method == "POST":
+        usuario = request.POST.get("usuario", "").strip()
+        claves = [f"equipo_ip_{_ip(request)}"[:200],
+                  "equipo_usr_" + hashlib.sha256(usuario.lower().encode()).hexdigest()]
+        if any(intentos_bloqueados(c) for c in claves):
+            error = "Demasiados intentos fallidos. Espere 5 minutos."
+        else:
+            u = authenticate(request, username=usuario, password=request.POST.get("password", ""))
+            if u and u.es_admin:
+                for c in claves:
+                    cache.delete(c)
+                login(request, u)
+                resp = redirect("inicio")
+                if request.POST.get("autorizar"):
+                    nombre = request.POST.get("nombre", "").strip()[:60] or "Equipo sin nombre"
+                    _, token = Dispositivo.crear(nombre, u)
+                    resp.set_cookie(Dispositivo.COOKIE, token, max_age=60 * 60 * 24 * 365 * 5,
+                                    httponly=True, secure=request.is_secure(), samesite="Lax")
+                    messages.success(request, f"Equipo «{nombre}» autorizado. El personal ya puede entrar aquí con su PIN.")
+                return resp
+            for c in claves:
+                registrar_fallo(c)
+            error = "Usuario o contraseña incorrectos (solo la administradora puede autorizar equipos)."
+    return render(request, "pos/equipo.html", {"error": error})

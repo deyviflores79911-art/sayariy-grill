@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # En producción define DJANGO_SECRET_KEY y DJANGO_DEBUG=0 (ver iniciar.bat)
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-insegura-cambiar-en-produccion")
-DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
+DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1" and not os.environ.get("VERCEL")
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "*").split(",")
 CSRF_TRUSTED_ORIGINS = [o for o in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if o]
 
@@ -38,6 +38,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "pos.middleware.DispositivoMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -91,6 +92,12 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT", BASE_DIR / "media"))
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# En internet: solo equipos autorizados por la administradora (en la red local no hace falta)
+REQUIERE_DISPOSITIVO = os.environ.get("DJANGO_REQUIERE_DISPOSITIVO", "0") == "1"
+
+# Caché en la base de datos: los bloqueos por intentos fallidos se comparten entre procesos
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.db.DatabaseCache", "LOCATION": "pos_cache"}}
 
 # La sesión dura 12 horas (un turno largo)
 SESSION_COOKIE_AGE = 60 * 60 * 12

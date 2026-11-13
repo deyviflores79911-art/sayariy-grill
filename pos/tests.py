@@ -116,3 +116,58 @@ class PosTests(TestCase):
         r = self.client.get(reverse("reportes_excel") + "?periodo=hoy")
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.content.startswith(b"PK"))
+
+
+from django.test import override_settings  # noqa: E402
+
+from .models import Dispositivo  # noqa: E402
+
+
+@override_settings(REQUIERE_DISPOSITIVO=True)
+class DispositivoTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.admin = Usuario.objects.create(username="admin", first_name="Dueña", rol=Usuario.ADMIN)
+        self.admin.set_password("secreto123")
+        self.admin.set_pin("9999")
+        self.admin.save()
+        self.juan = Usuario.objects.create(username="juan", first_name="Juan")
+        self.juan.set_pin("1234")
+        self.juan.save()
+
+    def test_equipo_no_autorizado_no_ve_pin(self):
+        r = self.client.get(reverse("login"))
+        self.assertRedirects(r, reverse("equipo"))
+        r = self.client.post(reverse("login"), {"usuario_id": self.juan.pk, "pin": "1234"})
+        self.assertRedirects(r, reverse("equipo"))
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_autorizar_equipo_y_luego_pin(self):
+        r = self.client.post(reverse("equipo"), {"usuario": "admin", "password": "secreto123",
+                                                 "autorizar": "on", "nombre": "Tablet caja"})
+        self.assertRedirects(r, reverse("inicio"), fetch_redirect_response=False)
+        self.assertIn(Dispositivo.COOKIE, r.cookies)
+        d = Dispositivo.objects.get()
+        self.assertEqual(d.nombre, "Tablet caja")
+        self.assertNotEqual(d.token_hash, r.cookies[Dispositivo.COOKIE].value)  # se guarda cifrado
+        self.client.post(reverse("logout"))
+        r = self.client.post(reverse("login"), {"usuario_id": self.juan.pk, "pin": "1234"})
+        self.assertRedirects(r, reverse("inicio"), fetch_redirect_response=False)
+        # Revocado: el trabajador queda fuera
+        d.activo = False
+        d.save()
+        self.assertRedirects(self.client.get(reverse("venta")), reverse("equipo"))
+
+    def test_admin_sin_autorizar_puede_entrar(self):
+        r = self.client.post(reverse("equipo"), {"usuario": "admin", "password": "secreto123"})
+        self.assertRedirects(r, reverse("inicio"), fetch_redirect_response=False)
+        self.assertEqual(Dispositivo.objects.count(), 0)
+        self.assertEqual(self.client.get(reverse("panel")).status_code, 200)
+
+    def test_trabajador_no_puede_autorizar_y_bloqueo(self):
+        r = self.client.post(reverse("equipo"), {"usuario": "juan", "password": "1234", "autorizar": "on"})
+        self.assertContains(r, "incorrectos")
+        for _ in range(5):
+            self.client.post(reverse("equipo"), {"usuario": "admin", "password": "mal"})
+        r = self.client.post(reverse("equipo"), {"usuario": "admin", "password": "secreto123"})
+        self.assertContains(r, "Demasiados intentos")

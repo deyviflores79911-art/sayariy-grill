@@ -5,6 +5,7 @@ from .views import admin, caja, comun, reportes
 urlpatterns = [
     path("", comun.inicio, name="inicio"),
     path("ingresar/", comun.login_view, name="login"),
+    path("equipo/", comun.equipo_view, name="equipo"),
     path("salir/", comun.logout_view, name="logout"),
     # Trabajador
     path("caja/abrir/", caja.caja_abrir, name="caja_abrir"),
@@ -34,4 +35,6 @@ urlpatterns = [
     path("admin/reportes/", reportes.reportes, name="reportes"),
     path("admin/reportes/excel/", reportes.reportes_excel, name="reportes_excel"),
     path("admin/configuracion/", admin.configuracion, name="configuracion"),
+    path("admin/equipos/", admin.equipos, name="equipos"),
+    path("admin/equipos/<int:pk>/revocar/", admin.equipo_revocar, name="equipo_revocar"),
 ]

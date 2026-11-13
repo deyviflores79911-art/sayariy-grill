@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load pos_tags %}
+{% block titulo %}Equipos{% endblock %}
+{% block contenido %}
+<h1>Equipos autorizados</h1>
+{% if requiere %}
+<p class="tenue">Solo estos equipos muestran la pantalla de PIN del personal. Para autorizar una tablet nueva,
+  ábrala en el navegador e ingrese con su usuario y contraseña de administradora.
+  Si pierde una tablet o despide a alguien, quítele la autorización aquí.</p>
+{% else %}
+<p class="tenue">En la red local no se exige autorización de equipos: cualquier equipo conectado al WiFi puede entrar.</p>
+{% endif %}
+<div class="tarjeta tabla-wrap">
+  <table>
+    <thead><tr><th>Nombre</th><th>Autorizado</th><th>Último uso</th><th>Estado</th><th></th></tr></thead>
+    {% for d in equipos %}
+    <tr>
+      <td><strong>{{ d.nombre }}</strong>{% if actual and actual.pk == d.pk %} <span class="chip amarillo">Este equipo</span>{% endif %}</td>
+      <td>{{ d.creado_en|fecha }} <span class="tenue">por {{ d.creado_por }}</span></td>
+      <td>{{ d.ultimo_uso|fecha|default:"—" }}</td>
+      <td>{% if d.activo %}<span class="chip verde">Autorizado</span>{% else %}<span class="chip">Revocado</span>{% endif %}</td>
+      <td class="der">
+        {% if d.activo %}
+        <form method="post" action="{% url 'equipo_revocar' d.pk %}" onsubmit="return confirm('¿Quitar la autorización a {{ d.nombre|escapejs }}? Ese equipo ya no podrá usar el sistema.')">
+          {% csrf_token %}<button class="btn btn-chico">Quitar autorización</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% empty %}<tr><td colspan="5" class="tenue">Todavía no hay equipos autorizados.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

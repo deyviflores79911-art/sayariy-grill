@@ -1,0 +1,6 @@
+{
+  "redirects": [
+    { "source": "/", "destination": "https://sayariy-grill.azurewebsites.net/", "permanent": false },
+    { "source": "/:path*", "destination": "https://sayariy-grill.azurewebsites.net/:path*", "permanent": false }
+  ]
+}

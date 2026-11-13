@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import messages
 from django.db.models import Count, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
@@ -5,7 +6,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from ..forms import CategoriaForm, ConfiguracionForm, GastoForm, ProductoForm, UsuarioForm
-from ..models import Categoria, Configuracion, Gasto, Producto, TurnoCaja, Usuario, Venta
+from ..models import Categoria, Configuracion, Dispositivo, Gasto, Producto, TurnoCaja, Usuario, Venta
 from .comun import admin_required
 from .reportes import PERIODOS, datos_reporte, obtener_periodo, rango_datetime
 
@@ -174,3 +175,23 @@ def cierres(request):
 def configuracion(request):
     return _formulario(request, ConfiguracionForm, Configuracion.get(), "admin_pos/form.html",
                        "Configuración", "configuracion")
+
+
+# ---------- Equipos autorizados ----------
+@admin_required
+def equipos(request):
+    return render(request, "admin_pos/equipos.html", {
+        "equipos": Dispositivo.objects.select_related("creado_por"),
+        "actual": getattr(request, "dispositivo", None),
+        "requiere": settings.REQUIERE_DISPOSITIVO,
+    })
+
+
+@admin_required
+@require_POST
+def equipo_revocar(request, pk):
+    d = get_object_or_404(Dispositivo, pk=pk)
+    d.activo = False
+    d.save(update_fields=["activo"])
+    messages.success(request, f"Se quitó la autorización a «{d.nombre}».")
+    return redirect("equipos")

@@ -1,0 +1,50 @@
+{% load static %}<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <title>Equipo no autorizado · {{ config.nombre_negocio }}</title>
+  <link rel="icon" href="{% static 'img/logo.png' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+<div class="login">
+  <img class="logo-img" src="{% static 'img/logo.png' %}" alt="">
+  <div class="logo">{{ config.nombre_negocio|upper }}</div>
+  <div class="eslogan">El origen del verdadero sabor</div>
+
+  <div class="tarjeta form" style="width:100%;margin-top:20px">
+    <h1>🔒 Este equipo no está autorizado</h1>
+    <p class="tenue">Por seguridad, el personal solo puede entrar con su PIN desde tablets o PCs autorizadas.
+      La administradora debe ingresar aquí <strong>una sola vez</strong> en cada equipo del restaurante.</p>
+    {% if error %}<div class="error-login" style="margin-bottom:16px">{{ error }}</div>{% endif %}
+    <form method="post" autocomplete="off">
+      {% csrf_token %}
+      <div class="campo">
+        <label for="usuario">Usuario de la administradora</label>
+        <input type="text" name="usuario" id="usuario" required autocapitalize="none" autocomplete="username" placeholder="admin">
+      </div>
+      <div class="campo">
+        <label for="password">Contraseña</label>
+        <input type="password" name="password" id="password" required autocomplete="current-password">
+      </div>
+      <div class="campo campo-check">
+        <label><input type="checkbox" name="autorizar" id="autorizar" checked> Autorizar este equipo para el personal</label>
+        <div class="ayuda">Desmárquelo si solo quiere revisar reportes desde su celular personal.</div>
+      </div>
+      <div class="campo" id="campo-nombre">
+        <label for="nombre">Nombre del equipo</label>
+        <input type="text" name="nombre" id="nombre" maxlength="60" placeholder="Ej.: Tablet caja, PC cocina">
+      </div>
+      <button class="btn btn-rojo btn-xl">Ingresar</button>
+    </form>
+  </div>
+</div>
+<script>
+  const chk = document.getElementById('autorizar');
+  const campo = document.getElementById('campo-nombre');
+  chk.addEventListener('change', () => campo.classList.toggle('oculto', !chk.checked));
+</script>
+</body>
+</html>

@@ -26,6 +26,7 @@
       <a href="{% url 'productos' %}" class="{% if 'producto' in n %}activo{% endif %}">Productos</a>
       <a href="{% url 'categorias' %}" class="{% if 'categoria' in n %}activo{% endif %}">Categorías</a>
       <a href="{% url 'trabajadores' %}" class="{% if 'trabajador' in n %}activo{% endif %}">Personal</a>
+      <a href="{% url 'equipos' %}" class="{% if 'equipo' in n %}activo{% endif %}">Equipos</a>
       <a href="{% url 'configuracion' %}" class="{% if n == 'configuracion' %}activo{% endif %}">Ajustes</a>
     {% endif %}
   </nav>
