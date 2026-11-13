@@ -45,11 +45,11 @@
   </div>
   <div class="tabla-wrap">
   <table>
-    <thead><tr><th>N°</th><th>Hora</th><th>Trabajador</th><th>Destino</th><th>Pago</th><th class="der">Total</th></tr></thead>
+    <thead><tr><th>N°</th><th>Hora</th><th class="m-ocultar">Trabajador</th><th class="m-ocultar">Destino</th><th>Pago</th><th class="der">Total</th></tr></thead>
     {% for v in ultimas %}
     <tr class="{% if v.anulada %}anulada{% endif %}">
       <td><a href="{% url 'ticket' v.pk %}">{{ v.numero }}</a></td><td>{{ v.fecha_hora|time:"H:i" }}</td>
-      <td>{{ v.usuario }}</td><td>{{ v.destino }}</td><td>{{ v.get_metodo_pago_display }}</td><td class="der">{{ v.total|bs }}</td>
+      <td class="m-ocultar">{{ v.usuario }}</td><td class="m-ocultar">{{ v.destino }}</td><td>{{ v.get_metodo_pago_display }}</td><td class="der">{{ v.total|bs }}</td>
     </tr>
     {% empty %}<tr><td colspan="6" class="tenue">Todavía no hay ventas hoy.</td></tr>{% endfor %}
   </table>

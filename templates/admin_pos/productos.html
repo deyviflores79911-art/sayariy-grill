@@ -14,15 +14,15 @@
 </div>
 <div class="tarjeta tabla-wrap">
   <table>
-    <thead><tr><th>Foto</th><th>Nombre</th><th>Categoría</th><th class="der">Precio</th><th>Estado</th><th></th></tr></thead>
+    <thead><tr><th>Foto</th><th>Nombre</th><th class="m-ocultar">Categoría</th><th class="der">Precio</th><th class="m-ocultar">Estado</th><th></th></tr></thead>
     {% for p in productos %}
     <tr>
       <td>{% if p.foto %}<img src="{{ p.foto.url }}" alt="" style="width:56px;height:42px;object-fit:cover;border-radius:8px">{% else %}<span class="tenue">—</span>{% endif %}</td>
-      <td><strong>{{ p.nombre }}</strong></td>
-      <td>{{ p.categoria }}</td>
+      <td><strong>{{ p.nombre }}</strong>{% if not p.activo %} <span class="chip">Inactivo</span>{% endif %}</td>
+      <td class="m-ocultar">{{ p.categoria }}</td>
       <td class="der">{{ p.precio|bs }}</td>
-      <td>{% if p.activo %}<span class="chip verde">Activo</span>{% else %}<span class="chip">Inactivo</span>{% endif %}</td>
-      <td class="der" style="white-space:nowrap">
+      <td class="m-ocultar">{% if p.activo %}<span class="chip verde">Activo</span>{% else %}<span class="chip">Inactivo</span>{% endif %}</td>
+      <td class="der acciones-celda" style="white-space:nowrap">
         <a class="btn btn-chico" href="{% url 'producto_editar' p.pk %}">Editar</a>
         <form method="post" action="{% url 'producto_toggle' p.pk %}" style="display:inline">{% csrf_token %}
           <input type="hidden" name="volver" value="{{ request.get_full_path }}">

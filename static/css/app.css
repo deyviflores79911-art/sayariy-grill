@@ -280,3 +280,66 @@ dialog h2 { margin-top: 0; }
     var(--negro);
 }
 @media (max-width: 600px) { .marca img { width: 32px; height: 32px; } }
+
+/* ---------- Menú: barra en PC/tablet, botón "Menú" en celular ---------- */
+.nav a i { font-style: normal; display: none; }
+.menu-btn, .menu-pie, .menu-fondo { display: none; }
+
+@media (max-width: 900px) {
+  .top { justify-content: space-between; min-height: 64px; }
+  .marca span { font-size: 1.05rem; }
+  .usuario { display: none; }
+  .menu-btn {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 8px 18px;
+    border-radius: 12px; border: 2px solid var(--rojo); background: var(--rojo); color: #fff;
+    font: inherit; font-weight: 800; cursor: pointer;
+  }
+  .nav {
+    display: none; position: fixed; left: 0; right: 0; top: 64px; z-index: 60;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;
+    background: #000; border-bottom: 3px solid var(--rojo); padding: 14px 16px 16px;
+    max-height: calc(100vh - 64px); overflow-y: auto; flex-wrap: wrap;
+  }
+  body.menu-abierto .nav { display: grid; }
+  body.menu-abierto .menu-fondo { display: block; position: fixed; inset: 64px 0 0 0; z-index: 55; background: rgba(0,0,0,.6); }
+  .nav a {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    min-height: 92px; padding: 12px 8px; border-radius: 16px; background: var(--panel2);
+    border: 2px solid var(--borde); font-size: 1.05rem; font-weight: 700; text-align: center;
+  }
+  .nav a i { display: block; font-size: 1.9rem; line-height: 1; }
+  .nav a.activo { background: var(--rojo); border-color: var(--rojo); }
+  .menu-pie {
+    grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding-top: 12px; margin-top: 4px; border-top: 1px solid var(--borde); color: var(--tenue);
+  }
+  .menu-pie form { margin: 0; }
+  .menu-pie .btn { min-height: 52px; padding: 8px 28px; }
+  body.menu-abierto { overflow: hidden; }
+  /* La barra del pedido en la pantalla de venta queda debajo del menú */
+  body.menu-abierto .barra-movil { display: none; }
+}
+@media (max-width: 600px) {
+  .top { padding: 8px 12px; }
+  .nav a { padding: 10px 6px; font-size: 1rem; }
+  .nav { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 360px) { .nav { grid-template-columns: repeat(2, 1fr); } .marca span { display: none; } }
+@media (max-width: 900px) { body.menu-abierto .top { z-index: 70; } }
+.marca span { color: #fff; }
+
+/* Tablas en celular: se ocultan columnas secundarias y los botones se apilan */
+@media (max-width: 600px) {
+  .m-ocultar { display: none; }
+  td.acciones-celda { white-space: normal !important; }
+  td.acciones-celda .btn { display: flex; width: 100%; margin: 4px 0; }
+  td.acciones-celda form { display: block; width: 100%; }
+  td.acciones-celda form .btn { width: 100%; }
+  th, td { padding: 10px 6px; }
+}
+@media (max-width: 600px) {
+  .tarjeta.tabla-wrap { padding: 8px; }
+  .tabla-wrap td img { width: 44px !important; height: 36px !important; }
+  td.acciones-celda { width: 1%; }
+  td.acciones-celda .btn { justify-content: center; padding: 6px 10px; font-size: .85rem; }
+}

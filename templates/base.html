@@ -11,30 +11,36 @@
 <body class="{% block body_class %}{% endblock %}">
 {% with n=request.resolver_match.url_name %}
 <header class="top">
-  <a class="marca" href="{% url 'inicio' %}"><img src="{% static 'img/logo.png' %}" alt="">{{ config.nombre_negocio }}</a>
-  <nav class="nav">
+  <a class="marca" href="{% url 'inicio' %}"><img src="{% static 'img/logo.png' %}" alt=""><span>{{ config.nombre_negocio }}</span></a>
+  <button type="button" class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="menu">☰ Menú</button>
+  <nav class="nav" id="menu">
     {% if user.es_admin %}
-      <a href="{% url 'panel' %}" class="{% if n == 'panel' %}activo{% endif %}">Inicio</a>
+      <a href="{% url 'panel' %}" class="{% if n == 'panel' %}activo{% endif %}"><i>🏠</i>Inicio</a>
     {% endif %}
-    <a href="{% url 'venta' %}" class="{% if n == 'venta' or n == 'caja_abrir' %}activo{% endif %}">Vender</a>
-    <a href="{% url 'mis_ventas' %}" class="{% if n == 'mis_ventas' %}activo{% endif %}">Mi caja</a>
+    <a href="{% url 'venta' %}" class="{% if n == 'venta' or n == 'caja_abrir' %}activo{% endif %}"><i>🛒</i>Vender</a>
+    <a href="{% url 'mis_ventas' %}" class="{% if n == 'mis_ventas' or n == 'caja_cerrar' %}activo{% endif %}"><i>💵</i>Mi caja</a>
     {% if user.es_admin %}
-      <a href="{% url 'ventas' %}" class="{% if n == 'ventas' %}activo{% endif %}">Ventas</a>
-      <a href="{% url 'reportes' %}" class="{% if n == 'reportes' %}activo{% endif %}">Reportes</a>
-      <a href="{% url 'cierres' %}" class="{% if n == 'cierres' %}activo{% endif %}">Cierres</a>
-      <a href="{% url 'gastos' %}" class="{% if n == 'gastos' %}activo{% endif %}">Gastos</a>
-      <a href="{% url 'productos' %}" class="{% if 'producto' in n %}activo{% endif %}">Productos</a>
-      <a href="{% url 'categorias' %}" class="{% if 'categoria' in n %}activo{% endif %}">Categorías</a>
-      <a href="{% url 'trabajadores' %}" class="{% if 'trabajador' in n %}activo{% endif %}">Personal</a>
-      {% if requiere_dispositivo %}<a href="{% url 'equipos' %}" class="{% if 'equipo' in n %}activo{% endif %}">Equipos</a>{% endif %}
-      <a href="{% url 'configuracion' %}" class="{% if n == 'configuracion' %}activo{% endif %}">Ajustes</a>
+      <a href="{% url 'ventas' %}" class="{% if n == 'ventas' %}activo{% endif %}"><i>🧾</i>Ventas</a>
+      <a href="{% url 'reportes' %}" class="{% if n == 'reportes' %}activo{% endif %}"><i>📊</i>Reportes</a>
+      <a href="{% url 'cierres' %}" class="{% if n == 'cierres' or n == 'cierre_detalle' %}activo{% endif %}"><i>🔒</i>Cierres</a>
+      <a href="{% url 'gastos' %}" class="{% if n == 'gastos' %}activo{% endif %}"><i>💸</i>Gastos</a>
+      <a href="{% url 'productos' %}" class="{% if 'producto' in n %}activo{% endif %}"><i>🍗</i>Productos</a>
+      <a href="{% url 'categorias' %}" class="{% if 'categoria' in n %}activo{% endif %}"><i>🗂️</i>Categorías</a>
+      <a href="{% url 'trabajadores' %}" class="{% if 'trabajador' in n %}activo{% endif %}"><i>👥</i>Personal</a>
+      {% if requiere_dispositivo %}<a href="{% url 'equipos' %}" class="{% if 'equipo' in n %}activo{% endif %}"><i>📱</i>Equipos</a>{% endif %}
+      <a href="{% url 'configuracion' %}" class="{% if n == 'configuracion' %}activo{% endif %}"><i>⚙️</i>Ajustes</a>
     {% endif %}
+    <div class="menu-pie">
+      <span>👤 {{ user.nombre }}</span>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn">Salir</button></form>
+    </div>
   </nav>
   <div class="usuario">
     <span>👤 {{ user.nombre }}</span>
     <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn btn-chico">Salir</button></form>
   </div>
 </header>
+<div class="menu-fondo" id="menu-fondo"></div>
 {% endwith %}
 <main class="contenido">
   {% if messages %}
@@ -42,6 +48,19 @@
   {% endif %}
   {% block contenido %}{% endblock %}
 </main>
+<script>
+(function () {
+  const btn = document.getElementById('menu-btn'), fondo = document.getElementById('menu-fondo');
+  function poner(abierto) {
+    document.body.classList.toggle('menu-abierto', abierto);
+    btn.setAttribute('aria-expanded', abierto);
+    btn.textContent = abierto ? '✕ Cerrar' : '☰ Menú';
+  }
+  btn.addEventListener('click', () => poner(!document.body.classList.contains('menu-abierto')));
+  fondo.addEventListener('click', () => poner(false));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') poner(false); });
+})();
+</script>
 {% block scripts %}{% endblock %}
 </body>
 </html>
