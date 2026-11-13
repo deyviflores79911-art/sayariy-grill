@@ -1,10 +1,7 @@
 @echo off
-REM ===== Publica en Azure la ultima version guardada en git =====
+REM ===== Publica la app: cada push a main se despliega solo en Vercel =====
 cd /d "%~dp0"
 git push
-git archive --format=zip -o "%TEMP%\sayariy-deploy.zip" HEAD
-call az webapp deploy -g rg-sayariy-grill -n sayariy-grill --src-path "%TEMP%\sayariy-deploy.zip" --type zip
-del "%TEMP%\sayariy-deploy.zip"
 echo.
-echo Listo: https://sayariy-grill.azurewebsites.net
+echo Vercel publicara la nueva version en 1-2 minutos: https://sayariy-grill.vercel.app
 pause

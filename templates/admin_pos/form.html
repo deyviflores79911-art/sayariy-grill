@@ -14,3 +14,26 @@
   </form>
 </div>
 {% endblock %}
+{% block scripts %}
+<script>
+/* Reduce la foto en el celular antes de subirla (más rápida y bajo el límite de 4,5 MB) */
+document.querySelectorAll('input[type=file][accept^="image"]').forEach(inp => {
+  inp.addEventListener('change', async () => {
+    const f = inp.files[0];
+    if (!f || !f.type.startsWith('image/') || !window.DataTransfer) return;
+    try {
+      const bmp = await createImageBitmap(f, { imageOrientation: 'from-image' });
+      const k = Math.min(1, 1280 / Math.max(bmp.width, bmp.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+      c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.85));
+      if (!blob || blob.size >= f.size) return;
+      const dt = new DataTransfer();
+      dt.items.add(new File([blob], f.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' }));
+      inp.files = dt.files;
+    } catch (e) { /* si el navegador no puede, se sube la original */ }
+  });
+});
+</script>
+{% endblock %}

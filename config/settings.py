@@ -12,7 +12,7 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1" and not os.environ.get("VERCE
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "*").split(",")
 CSRF_TRUSTED_ORIGINS = [o for o in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if o]
 
-# Publicado en internet con HTTPS (Azure)
+# Publicado en internet con HTTPS (Vercel / Azure)
 if os.environ.get("DJANGO_HTTPS") == "1":
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = True
@@ -43,10 +43,6 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-# En Vercel (sin base de datos) todo se redirige al sitio en Azure
-if os.environ.get("VERCEL"):
-    MIDDLEWARE.insert(0, "pos.middleware.RedirigirVercelMiddleware")
-
 ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
@@ -67,10 +63,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# Local: SQLite. En Azure: variable DATABASE_URL (PostgreSQL)
+# Local: SQLite. En la nube: variable DATABASE_URL (PostgreSQL en Azure)
+# En Vercel cada función es efímera: una conexión por petición (conn_max_age=0)
+EN_VERCEL = bool(os.environ.get("VERCEL"))
 DATABASES = {
     "default": dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}", conn_max_age=60, conn_health_checks=True
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=0 if EN_VERCEL else 60, conn_health_checks=not EN_VERCEL,
     )
 }
 
@@ -91,9 +90,24 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# WhiteNoise sirve los estilos directamente desde /static (sin collectstatic en Vercel)
+WHITENOISE_USE_FINDERS = True
+
 MEDIA_URL = "/media/"
-# En Azure se usa /home/media (almacenamiento permanente)
 MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT", BASE_DIR / "media"))
+
+# Fotos de productos: en la nube van a Azure Blob Storage (Vercel no guarda archivos)
+AZURE_CONEXION = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
+if AZURE_CONEXION:
+    STORAGES["default"] = {
+        "BACKEND": "storages.backends.azure_storage.AzureStorage",
+        "OPTIONS": {"connection_string": AZURE_CONEXION, "azure_container": "media",
+                    "expiration_secs": None, "overwrite_files": False},
+    }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
