@@ -1,9 +1,11 @@
 {% extends "base.html" %}
-{% load pos_tags %}
 {% block titulo %}Inicio{% endblock %}
 {% block contenido %}
 <div class="acciones" style="justify-content:space-between;margin-top:0">
-  <h1 style="margin:0">Hoy, {% now "d/m/Y" %}</h1>
+  <div>
+    <h1 style="margin:0">Hoy, {% now "d/m/Y" %}</h1>
+    <div class="en-vivo"><span class="punto"></span> En vivo · actualizado <span id="v-hora">{{ vivo.hora }}</span></div>
+  </div>
   <div class="acciones" style="margin:0">
     <a class="btn btn-rojo" href="{% url 'venta' %}">🛒 Vender</a>
     <a class="btn" href="{% url 'gastos' %}">➕ Registrar gasto</a>
@@ -12,47 +14,93 @@
 </div>
 
 <div class="grid-kpi">
-  <div class="kpi destacado"><div class="t">Vendido hoy</div><div class="v">{{ d.total|bs }}</div></div>
-  <div class="kpi"><div class="t">Ventas</div><div class="v">{{ d.num }}</div></div>
-  <div class="kpi"><div class="t">Gastos de hoy</div><div class="v">{{ d.total_gastos|bs }}</div></div>
-  <div class="kpi"><div class="t">Ganancia simple</div><div class="v {% if d.ganancia < 0 %}rojo{% else %}verde{% endif %}">{{ d.ganancia|bs }}</div></div>
-  <div class="kpi"><div class="t">Anuladas</div><div class="v {% if d.num_anuladas %}rojo{% endif %}">{{ d.num_anuladas }}</div></div>
+  <div class="kpi destacado"><div class="t">Vendido hoy</div><div class="v" id="k-total"></div></div>
+  <div class="kpi"><div class="t">Ventas</div><div class="v" id="k-num"></div></div>
+  <div class="kpi"><div class="t">Gastos de hoy</div><div class="v" id="k-gastos"></div></div>
+  <div class="kpi"><div class="t">Ganancia simple</div><div class="v" id="k-ganancia"></div></div>
+  <div class="kpi"><div class="t">Anuladas</div><div class="v" id="k-anuladas"></div></div>
 </div>
 
 <div class="dos-col" style="margin-top:16px">
   <div class="tarjeta">
-    <h2 style="margin-top:0">Cajas abiertas</h2>
-    {% for t, c in abiertas %}
-      <div class="barra-fila" style="grid-template-columns:1fr auto auto">
-        <span><strong>{{ t.usuario }}</strong> <span class="tenue">desde {{ t.abierto_en|time:"H:i" }}</span></span>
-        <span>{{ c.total|bs }}</span>
-        <a class="btn btn-chico" href="{% url 'cierre_detalle' t.pk %}">Ver</a>
-      </div>
-    {% empty %}<p class="tenue">No hay cajas abiertas.</p>{% endfor %}
+    <h2 style="margin-top:0">🧾 Ventas de hoy</h2>
+    <div id="ventas" class="vivo-lista"></div>
+    <div class="acciones" style="margin-bottom:0"><a class="btn btn-chico" href="{% url 'ventas' %}">Ver todas y anular ›</a></div>
   </div>
-  <div class="tarjeta">
-    <h2 style="margin-top:0">Por método de pago</h2>
-    {% for m in d.por_metodo %}
-      <div class="barra-fila"><span class="nom">{{ m.metodo }}</span><div class="barra"><i style="width:{{ m.pct }}%"></i></div><span>{{ m.total|bs }}</span></div>
-    {% empty %}<p class="tenue">Sin ventas todavía.</p>{% endfor %}
+  <div>
+    <div class="tarjeta">
+      <h2 style="margin-top:0">👤 Por vendedor</h2>
+      <div id="vendedores"></div>
+    </div>
+    <div class="tarjeta">
+      <h2 style="margin-top:0">💵 Cajas abiertas</h2>
+      <div id="cajas"></div>
+    </div>
+    <div class="tarjeta">
+      <h2 style="margin-top:0">Por método de pago</h2>
+      <div id="metodos"></div>
+    </div>
   </div>
 </div>
+{{ vivo|json_script:"datos-vivo" }}
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  const URL_VIVO = "{% url 'panel_vivo' %}";
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const bs = v => 'Bs ' + Number(v).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  let vistos = null;
 
-<div class="tarjeta" style="margin-top:16px">
-  <div class="acciones" style="justify-content:space-between;margin:0 0 8px">
-    <h2 style="margin:0">Últimas ventas</h2>
-    <a href="{% url 'ventas' %}">Ver todas ›</a>
-  </div>
-  <div class="tabla-wrap">
-  <table>
-    <thead><tr><th>N°</th><th>Hora</th><th class="m-ocultar">Trabajador</th><th class="m-ocultar">Destino</th><th>Pago</th><th class="der">Total</th></tr></thead>
-    {% for v in ultimas %}
-    <tr class="{% if v.anulada %}anulada{% endif %}">
-      <td><a href="{% url 'ticket' v.pk %}">{{ v.numero }}</a></td><td>{{ v.fecha_hora|time:"H:i" }}</td>
-      <td class="m-ocultar">{{ v.usuario }}</td><td class="m-ocultar">{{ v.destino }}</td><td>{{ v.get_metodo_pago_display }}</td><td class="der">{{ v.total|bs }}</td>
-    </tr>
-    {% empty %}<tr><td colspan="6" class="tenue">Todavía no hay ventas hoy.</td></tr>{% endfor %}
-  </table>
-  </div>
-</div>
+  function barras(lista, extra) {
+    return lista.length ? lista.map(x => `<div class="barra-fila"><span class="nom">${esc(x.nombre)}</span>
+      <div class="barra"><i style="width:${x.pct}%"></i></div><span>${extra(x)}</span></div>`).join('')
+      : '<p class="tenue">Sin ventas todavía.</p>';
+  }
+
+  function pintar(d) {
+    $('v-hora').textContent = d.hora;
+    $('k-total').textContent = bs(d.total);
+    $('k-num').textContent = d.num;
+    $('k-gastos').textContent = bs(d.gastos);
+    $('k-ganancia').textContent = bs(d.ganancia);
+    $('k-ganancia').className = 'v ' + (Number(d.ganancia) < 0 ? 'rojo' : 'verde');
+    $('k-anuladas').textContent = d.anuladas;
+    $('k-anuladas').className = 'v ' + (d.anuladas ? 'rojo' : '');
+
+    $('vendedores').innerHTML = barras(d.por_vendedor, x => `${x.num} · ${bs(x.total)}`);
+    $('metodos').innerHTML = barras(d.por_metodo, x => bs(x.total));
+    $('cajas').innerHTML = d.cajas.length ? d.cajas.map(c => `<div class="barra-fila" style="grid-template-columns:1fr auto auto">
+        <span><strong>${esc(c.nombre)}</strong> <span class="tenue">desde ${c.desde}</span></span>
+        <span>${bs(c.total)}</span><a class="btn btn-chico" href="${c.url}">Ver</a></div>`).join('')
+      : '<p class="tenue">No hay cajas abiertas.</p>';
+
+    const nuevos = vistos ? new Set(d.ventas.filter(v => !vistos.has(v.id)).map(v => v.id)) : new Set();
+    vistos = new Set(d.ventas.map(v => v.id));
+    $('ventas').innerHTML = d.ventas.length ? d.ventas.map(v => {
+      const chip = v.anulada ? '<span class="chip rojo">Anulada</span>'
+        : v.cocina === 'pendiente' ? '<span class="chip chip-cocina">🍳 En cocina</span>'
+        : v.cocina === 'listo' ? '<span class="chip verde">✔ Listo</span>' : '';
+      return `<a class="vivo-venta${v.anulada ? ' anulada' : ''}${nuevos.has(v.id) ? ' nueva' : ''}" href="${v.url}">
+        <div class="l1"><span class="hora">${v.hora}</span><span class="quien">👤 ${esc(v.vendedor)}</span><span class="tot">${bs(v.total)}</span></div>
+        <div class="l2">${esc(v.items)}</div>
+        <div class="l3"><span>#${esc(v.numero.replace(/^0+/, ''))} · ${esc(v.destino)}${v.cliente ? ' · ' + esc(v.cliente) : ''} · ${esc(v.metodo)}</span>${chip}</div>
+      </a>`;
+    }).join('') : '<p class="tenue">Todavía no hay ventas hoy.</p>';
+  }
+
+  async function actualizar() {
+    try {
+      const r = await fetch(URL_VIVO, { headers: { 'Accept': 'application/json' } });
+      if (r.redirected) { location.reload(); return; }
+      if (r.ok) { pintar(await r.json()); document.querySelector('.en-vivo').classList.remove('caido'); }
+    } catch (e) { document.querySelector('.en-vivo').classList.add('caido'); }
+  }
+
+  pintar(JSON.parse($('datos-vivo').textContent));
+  setInterval(() => { if (!document.hidden) actualizar(); }, 8000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) actualizar(); });
+})();
+</script>
 {% endblock %}

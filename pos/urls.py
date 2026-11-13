@@ -23,6 +23,7 @@ urlpatterns = [
     path("cocina/<int:pk>/deshacer/", cocina.cocina_deshacer, name="cocina_deshacer"),
     # Administración
     path("admin/", admin.panel, name="panel"),
+    path("admin/en-vivo/", admin.panel_vivo, name="panel_vivo"),
     path("admin/productos/", admin.productos, name="productos"),
     path("admin/productos/nuevo/", admin.producto_form, name="producto_nuevo"),
     path("admin/productos/<int:pk>/", admin.producto_form, name="producto_editar"),

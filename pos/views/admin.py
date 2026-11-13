@@ -1,7 +1,9 @@
 from django.conf import settings
 from django.contrib import messages
 from django.db.models import Count, Q, Sum
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -11,16 +13,41 @@ from .comun import admin_required
 from .reportes import PERIODOS, datos_reporte, obtener_periodo, rango_datetime
 
 
-@admin_required
-def panel(request):
+def datos_en_vivo():
+    """Resumen de hoy y últimas ventas para el Inicio de la administradora (se actualiza solo)."""
     hoy = timezone.localdate()
     d = datos_reporte(hoy, hoy)
-    abiertas = [(t, t.calcular()) for t in TurnoCaja.objects.filter(estado=TurnoCaja.ABIERTA).select_related("usuario")]
-    return render(request, "admin_pos/panel.html", {
-        "d": d, "abiertas": abiertas,
-        "ultimas": d["ventas"][:8],
-        "mi_turno": request.user.turno_abierto(),
-    })
+    ultimas = d["ventas"].select_related("usuario")[:40]
+    return {
+        "hora": timezone.localtime().strftime("%H:%M:%S"),
+        "total": str(d["total"]), "num": d["num"], "gastos": str(d["total_gastos"]),
+        "ganancia": str(d["ganancia"]), "anuladas": d["num_anuladas"],
+        "por_metodo": [{"nombre": m["metodo"], "total": str(m["total"]), "pct": m["pct"]} for m in d["por_metodo"]],
+        "por_vendedor": [{"nombre": t["nombre"], "num": t["num"], "total": str(t["total"]), "pct": t["pct"]}
+                         for t in d["por_trabajador"]],
+        "cajas": [{"id": t.pk, "nombre": t.usuario.nombre, "desde": timezone.localtime(t.abierto_en).strftime("%H:%M"),
+                   "total": str(t.calcular()["total"]), "url": reverse("cierre_detalle", args=[t.pk])}
+                  for t in TurnoCaja.objects.filter(estado=TurnoCaja.ABIERTA).select_related("usuario")],
+        "ventas": [{
+            "id": v.pk, "numero": v.numero, "hora": timezone.localtime(v.fecha_hora).strftime("%H:%M"),
+            "vendedor": v.usuario.nombre, "cliente": v.cliente, "destino": v.destino,
+            "metodo": v.get_metodo_pago_display(), "total": str(v.total), "anulada": v.anulada,
+            "cocina": "" if v.anulada else ("pendiente" if v.cocina_estado == Venta.PENDIENTE
+                                            else ("listo" if v.listo_en else "")),
+            "items": ", ".join(f"{i.cantidad}× {i.nombre_producto}" for i in v.items.all()),
+            "url": reverse("ticket", args=[v.pk]),
+        } for v in ultimas],
+    }
+
+
+@admin_required
+def panel(request):
+    return render(request, "admin_pos/panel.html", {"vivo": datos_en_vivo()})
+
+
+@admin_required
+def panel_vivo(request):
+    return JsonResponse(datos_en_vivo())
 
 
 def _formulario(request, form_class, instancia, plantilla, titulo, volver, archivos=False):

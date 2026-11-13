@@ -231,3 +231,26 @@ class CocinaTests(TestCase):
         self.vender([{"id": self.pollo.pk, "cantidad": 1}])
         Venta.objects.get().anular("error", por=self.cajera)
         self.assertEqual(self.client.get(reverse("cocina_pedidos")).json()["pendientes"], [])
+
+
+class PanelVivoTests(TestCase):
+    def test_panel_en_vivo(self):
+        cache.clear()
+        admin = Usuario.objects.create(username="admin", first_name="Gabriela", rol=Usuario.ADMIN)
+        cajera = Usuario.objects.create(username="graciela", first_name="Graciela")
+        cat = Categoria.objects.create(nombre="Comida")
+        pollo = Producto.objects.create(nombre="Cuarto pecho", categoria=cat, precio=Decimal("30"))
+        self.client.force_login(cajera)
+        self.client.post(reverse("caja_abrir"), {"monto_inicial": "0"})
+        self.client.post(reverse("venta_confirmar"), json.dumps({
+            "items": [{"id": pollo.pk, "cantidad": 2}], "tipo": "llevar", "metodo": "qr", "cliente": "Rosa"}),
+            content_type="application/json")
+        self.assertEqual(self.client.get(reverse("panel_vivo")).status_code, 302)  # solo administradora
+        self.client.force_login(admin)
+        self.assertEqual(self.client.get(reverse("panel")).status_code, 200)
+        d = self.client.get(reverse("panel_vivo")).json()
+        self.assertEqual(d["num"], 1)
+        v = d["ventas"][0]
+        self.assertEqual((v["vendedor"], v["cliente"], v["items"], v["cocina"]), ("Graciela", "Rosa", "2× Cuarto pecho", "pendiente"))
+        self.assertEqual(d["por_vendedor"][0]["nombre"], "Graciela")
+        self.assertEqual(d["cajas"][0]["nombre"], "Graciela")

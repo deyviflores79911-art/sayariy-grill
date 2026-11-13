@@ -363,3 +363,21 @@ body.cocina-body .contenido { max-width: none; }
 .nota-gral { background: #3b2a05; border: 2px solid var(--amarillo); color: #fef08a; border-radius: 12px; padding: 8px 10px; margin-bottom: 8px; font-weight: 700; }
 .cocina-listos .listo-fila { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--borde); }
 .chip-cocina { background: #713f12; color: #fef08a; }
+
+/* ---------- Inicio en vivo ---------- */
+.en-vivo { color: var(--tenue); font-size: .9rem; margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+.en-vivo .punto { width: 10px; height: 10px; border-radius: 50%; background: var(--verde); animation: latido 1.6s infinite; }
+.en-vivo.caido .punto { background: var(--rojo); animation: none; }
+@keyframes latido { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+.vivo-lista { display: flex; flex-direction: column; gap: 8px; max-height: 640px; overflow-y: auto; }
+.vivo-venta { display: block; text-decoration: none; color: var(--texto); background: var(--panel2); border: 1px solid var(--borde); border-radius: 12px; padding: 10px 12px; }
+.vivo-venta:hover { border-color: var(--tenue); }
+.vivo-venta .l1 { display: flex; gap: 10px; align-items: baseline; }
+.vivo-venta .hora { font-weight: 800; font-size: 1.1rem; }
+.vivo-venta .quien { flex: 1; color: var(--tenue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vivo-venta .tot { font-weight: 800; color: var(--oro); }
+.vivo-venta .l2 { margin: 4px 0; font-size: .95rem; }
+.vivo-venta .l3 { display: flex; justify-content: space-between; gap: 8px; align-items: center; color: var(--tenue); font-size: .85rem; flex-wrap: wrap; }
+.vivo-venta.anulada .l1, .vivo-venta.anulada .l2 { text-decoration: line-through; opacity: .6; }
+.vivo-venta.nueva { animation: nueva 3s ease-out; border-color: var(--verde); }
+@keyframes nueva { from { background: #14532d; } to { background: var(--panel2); } }
