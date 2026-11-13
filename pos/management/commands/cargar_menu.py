@@ -9,7 +9,11 @@ from pos.utils import comprimir_imagen
 
 FOTOS = Path(settings.BASE_DIR) / "menu_fotos"
 
-# (categoría, [(nombre, precio, foto)])  – precio None = falta definir (queda inactivo)
+# Solo dos categorías en la pantalla de venta; los grupos dan el orden dentro de cada una
+CATEGORIAS = [("Comida", True), ("Sodas", False)]  # (nombre, se prepara en cocina)
+BEBIDAS = {"Refrescos", "Sodas", "Cervezas"}
+
+# (grupo, [(nombre, precio, foto)])  – precio None = falta definir (queda inactivo)
 MENU = [
     ("Pollo al cilindro", [
         ("Económico pierna y contra", "18", "pollo"),
@@ -56,11 +60,12 @@ class Command(BaseCommand):
         Producto.objects.all().delete()
         Categoria.objects.all().delete()
 
-        for orden, (cat, productos) in enumerate(MENU):
-            c = Categoria.objects.create(nombre=cat, orden=orden,
-                                         a_cocina=cat not in ("Refrescos", "Sodas", "Cervezas"))
+        cats = {nombre: Categoria.objects.create(nombre=nombre, orden=i, a_cocina=cocina)
+                for i, (nombre, cocina) in enumerate(CATEGORIAS)}
+        for orden, (grupo, productos) in enumerate(MENU):
+            c = cats["Sodas"] if grupo in BEBIDAS else cats["Comida"]
             for nombre, precio, foto in productos:
-                p = Producto(nombre=nombre, categoria=c,
+                p = Producto(nombre=nombre, categoria=c, orden=orden,
                              precio=Decimal(precio or "0"), activo=precio is not None)
                 ruta = FOTOS / f"{foto}.jpg" if foto else None
                 if ruta and ruta.exists():

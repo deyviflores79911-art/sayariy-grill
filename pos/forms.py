@@ -17,7 +17,7 @@ def input_dinero():
 class ProductoForm(forms.ModelForm):
     class Meta:
         model = Producto
-        fields = ["nombre", "categoria", "precio", "foto", "activo"]
+        fields = ["nombre", "categoria", "precio", "orden", "foto", "activo"]
         widgets = {
             "precio": input_dinero(),
             "foto": forms.ClearableFileInput(attrs={"accept": "image/*"}),

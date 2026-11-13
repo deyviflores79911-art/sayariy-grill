@@ -81,6 +81,7 @@ class Producto(models.Model):
     nombre = models.CharField(max_length=100)
     categoria = models.ForeignKey(Categoria, on_delete=models.PROTECT, related_name="productos")
     precio = models.DecimalField(max_digits=10, decimal_places=2)
+    orden = models.PositiveSmallIntegerField(default=0, help_text="Menor número aparece primero en su categoría")
     foto = models.ImageField(upload_to="productos/", blank=True)
     activo = models.BooleanField(default=True)
     # Inventario (versión 2)
@@ -91,7 +92,7 @@ class Producto(models.Model):
     actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["categoria__orden", "precio", "nombre"]
+        ordering = ["categoria__orden", "orden", "precio", "nombre"]
 
     def __str__(self):
         return self.nombre
