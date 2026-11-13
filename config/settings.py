@@ -43,6 +43,10 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+# En Vercel (sin base de datos) todo se redirige al sitio en Azure
+if os.environ.get("VERCEL"):
+    MIDDLEWARE.insert(0, "pos.middleware.RedirigirVercelMiddleware")
+
 ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [

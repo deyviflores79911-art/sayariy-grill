@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth import logout
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.utils import timezone
 
@@ -32,3 +33,14 @@ class DispositivoMiddleware:
                         logout(request)
                     return redirect("equipo")
         return self.get_response(request)
+
+
+class RedirigirVercelMiddleware:
+    """En Vercel no hay base de datos: toda visita se envía al sitio real en Azure."""
+    DESTINO = "https://sayariy-grill.azurewebsites.net"
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        return HttpResponseRedirect(self.DESTINO + request.get_full_path())
