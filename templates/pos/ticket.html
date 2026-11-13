@@ -14,6 +14,7 @@
     <div style="text-align:center">{{ v.fecha_hora|fecha }}</div>
     <div class="sep"></div>
     <div><strong>{{ v.destino }}</strong> · Atendió: {{ v.usuario }}</div>
+    {% if v.cliente %}<div>Cliente: <strong>{{ v.cliente }}</strong></div>{% endif %}
     {% if v.anulada %}<div class="anulado">ANULADA</div>{% endif %}
     <div class="sep"></div>
     <table>
@@ -22,6 +23,7 @@
       {% if i.nota %}<tr><td colspan="2" style="padding-left:12px">* {{ i.nota }}</td></tr>{% endif %}
       {% endfor %}
     </table>
+    {% if v.nota %}<div>Nota: {{ v.nota }}</div>{% endif %}
     <div class="sep"></div>
     <table>
       <tr class="tot"><td>TOTAL</td><td style="text-align:right">{{ v.total|bs }}</td></tr>

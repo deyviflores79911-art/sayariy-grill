@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block titulo %}Cocina{% endblock %}
+{% block body_class %}cocina-body{% endblock %}
+{% block contenido %}
+<div class="cocina-cab">
+  <h1 style="margin:0">🍳 Pedidos para preparar <span class="chip rojo" id="n-pend">0</span></h1>
+  <button type="button" class="btn" id="sonido">🔔 Activar sonido</button>
+</div>
+<div class="cocina-grid" id="pendientes"></div>
+<p class="vacio" id="sin-pedidos">No hay pedidos pendientes. Los nuevos aparecen aquí solos.</p>
+
+<h2>✔ Listos (últimos 30 minutos)</h2>
+<div class="cocina-listos" id="listos"></div>
+<p class="error-login oculto" id="sin-conexion">Sin conexión con el servidor. Reintentando…</p>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  const URL_PEDIDOS = "{% url 'cocina_pedidos' %}";
+  const CSRF = "{{ csrf_token }}";
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const $ = id => document.getElementById(id);
+  let conocidos = null, sonido = false, audio = null, desfase = 0;
+
+  $('sonido').onclick = () => {
+    sonido = !sonido;
+    if (sonido && !audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+    $('sonido').textContent = sonido ? '🔔 Sonido activado' : '🔔 Activar sonido';
+    $('sonido').classList.toggle('btn-verde', sonido);
+    if (sonido) pitido();
+  };
+  function pitido() {
+    if (!sonido || !audio) return;
+    [0, 0.25].forEach(t => {
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.frequency.value = 880; o.connect(g); g.connect(audio.destination);
+      g.gain.setValueAtTime(0.3, audio.currentTime + t);
+      o.start(audio.currentTime + t); o.stop(audio.currentTime + t + 0.18);
+    });
+  }
+
+  function minutos(iso) { return Math.max(0, Math.floor((Date.now() + desfase - new Date(iso)) / 60000)); }
+  function items(p) {
+    return '<ul class="cocina-items">' + p.items.map(i =>
+      `<li><b>${i.cant}×</b> ${esc(i.nombre)}${i.nota ? `<div class="nota">📝 ${esc(i.nota)}</div>` : ''}</li>`).join('') + '</ul>';
+  }
+  function tarjeta(p) {
+    const m = minutos(p.hora);
+    const clase = m >= 20 ? 'tarde' : m >= 10 ? 'medio' : '';
+    return `<div class="pedido ${clase}">
+      <div class="pedido-cab">
+        <span class="num">#${esc(p.numero.replace(/^0+/, ''))}</span>
+        <span class="espera">⏱ ${m} min</span>
+      </div>
+      <div class="dest">${esc(p.destino)}${p.cliente ? ` · <b>${esc(p.cliente)}</b>` : ''}</div>
+      ${items(p)}
+      ${p.nota ? `<div class="nota-gral">📝 ${esc(p.nota)}</div>` : ''}
+      <div class="tenue" style="font-size:.85rem;margin-bottom:10px">Cajero: ${esc(p.cajero)}</div>
+      <button type="button" class="btn btn-verde btn-xl" data-listo="${p.id}">✔ LISTO</button>
+    </div>`;
+  }
+  function listo(p) {
+    return `<div class="listo-fila"><span><b>#${esc(p.numero.replace(/^0+/, ''))}</b> ${esc(p.destino)}${p.cliente ? ' · ' + esc(p.cliente) : ''}
+      <span class="tenue">— ${p.items.map(i => i.cant + '× ' + esc(i.nombre)).join(', ')}</span></span>
+      <button type="button" class="btn btn-chico" data-deshacer="${p.id}">↩ Volver a cocina</button></div>`;
+  }
+
+  async function cargar() {
+    try {
+      const r = await fetch(URL_PEDIDOS, { headers: { 'Accept': 'application/json' } });
+      if (r.redirected || !r.ok) { if (r.redirected) location.reload(); throw new Error(); }
+      const d = await r.json();
+      desfase = new Date(d.ahora) - Date.now();
+      $('sin-conexion').classList.add('oculto');
+      $('pendientes').innerHTML = d.pendientes.map(tarjeta).join('');
+      $('listos').innerHTML = d.listos.map(listo).join('') || '<p class="tenue">Ninguno todavía.</p>';
+      $('n-pend').textContent = d.pendientes.length;
+      $('sin-pedidos').classList.toggle('oculto', d.pendientes.length > 0);
+      const ids = new Set(d.pendientes.map(p => p.id));
+      if (conocidos && [...ids].some(id => !conocidos.has(id))) pitido();
+      conocidos = ids;
+      document.title = (d.pendientes.length ? `(${d.pendientes.length}) ` : '') + 'Cocina · POS';
+    } catch (e) {
+      $('sin-conexion').classList.remove('oculto');
+    }
+  }
+
+  async function enviar(url) {
+    await fetch(url, { method: 'POST', headers: { 'X-CSRFToken': CSRF } }).catch(() => {});
+    cargar();
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-listo],[data-deshacer]'); if (!b) return;
+    b.disabled = true;
+    if (b.dataset.listo) enviar(`/cocina/${b.dataset.listo}/listo/`);
+    else enviar(`/cocina/${b.dataset.deshacer}/deshacer/`);
+  });
+
+  cargar();
+  setInterval(cargar, 5000);
+})();
+</script>
+{% endblock %}

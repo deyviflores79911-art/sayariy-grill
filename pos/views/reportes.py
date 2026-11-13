@@ -158,13 +158,13 @@ def reportes_excel(request):
         ("Gastos (Bs)", d["total_gastos"]), ("Ganancia simple (Bs)", d["ganancia"]),
     ], primera=True)
     loc = timezone.localtime
-    hoja("Ventas", ["N°", "Fecha", "Hora", "Trabajador", "Destino", "Método", "Total", "Estado",
-                    "Motivo anulación", "Anulada por"], [
+    hoja("Ventas", ["N°", "Fecha", "Hora", "Trabajador", "Destino", "Cliente", "Nota", "Método", "Total",
+                    "Estado", "Motivo anulación", "Anulada por"], [
         (v.numero, loc(v.fecha_hora).strftime("%d/%m/%Y"), loc(v.fecha_hora).strftime("%H:%M"),
-         v.usuario.nombre, v.destino, v.get_metodo_pago_display(), v.total,
+         v.usuario.nombre, v.destino, v.cliente, v.nota, v.get_metodo_pago_display(), v.total,
          v.get_estado_display(), v.motivo_anulacion, v.anulada_por.nombre if v.anulada_por else "")
         for v in d["ventas"]
-    ], moneda=(7,))
+    ], moneda=(9,))
     hoja("Detalle", ["N° venta", "Fecha", "Producto", "Cantidad", "Precio", "Subtotal", "Nota", "Estado"], [
         (v.numero, loc(v.fecha_hora).strftime("%d/%m/%Y %H:%M"), i.nombre_producto, i.cantidad,
          i.precio_unitario, i.subtotal, i.nota, v.get_estado_display())

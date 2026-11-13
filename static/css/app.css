@@ -343,3 +343,23 @@ dialog h2 { margin-top: 0; }
   td.acciones-celda { width: 1%; }
   td.acciones-celda .btn { justify-content: center; padding: 6px 10px; font-size: .85rem; }
 }
+
+/* ---------- Pantalla de cocina ---------- */
+body.cocina-body .contenido { max-width: none; }
+.cocina-cab { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.cocina-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.pedido { background: var(--panel); border: 3px solid var(--borde); border-radius: 18px; padding: 14px 16px; display: flex; flex-direction: column; }
+.pedido.medio { border-color: var(--amarillo); }
+.pedido.tarde { border-color: var(--rojo); box-shadow: 0 0 18px rgba(211, 47, 47, .4); }
+.pedido-cab { display: flex; justify-content: space-between; align-items: center; }
+.pedido-cab .num { font-size: 1.8rem; font-weight: 900; }
+.pedido-cab .espera { font-weight: 800; font-size: 1.1rem; }
+.pedido.medio .espera { color: var(--amarillo); }
+.pedido.tarde .espera { color: var(--rojo-claro); }
+.pedido .dest { font-size: 1.15rem; margin: 4px 0 8px; color: var(--oro); font-weight: 700; }
+.cocina-items { list-style: none; padding: 0; margin: 0 0 8px; flex: 1; }
+.cocina-items li { font-size: 1.3rem; padding: 6px 0; border-bottom: 1px dashed var(--borde); }
+.cocina-items .nota { color: var(--amarillo); font-size: 1rem; font-weight: 700; margin-top: 2px; }
+.nota-gral { background: #3b2a05; border: 2px solid var(--amarillo); color: #fef08a; border-radius: 12px; padding: 8px 10px; margin-bottom: 8px; font-weight: 700; }
+.cocina-listos .listo-fila { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--borde); }
+.chip-cocina { background: #713f12; color: #fef08a; }

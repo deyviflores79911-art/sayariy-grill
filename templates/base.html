@@ -17,8 +17,11 @@
     {% if user.es_admin %}
       <a href="{% url 'panel' %}" class="{% if n == 'panel' %}activo{% endif %}"><i>🏠</i>Inicio</a>
     {% endif %}
+    {% if not user.es_cocina %}
     <a href="{% url 'venta' %}" class="{% if n == 'venta' or n == 'caja_abrir' %}activo{% endif %}"><i>🛒</i>Vender</a>
     <a href="{% url 'mis_ventas' %}" class="{% if n == 'mis_ventas' or n == 'caja_cerrar' %}activo{% endif %}"><i>💵</i>Mi caja</a>
+    {% endif %}
+    <a href="{% url 'cocina' %}" class="{% if n == 'cocina' %}activo{% endif %}"><i>🍳</i>Cocina</a>
     {% if user.es_admin %}
       <a href="{% url 'ventas' %}" class="{% if n == 'ventas' %}activo{% endif %}"><i>🧾</i>Ventas</a>
       <a href="{% url 'reportes' %}" class="{% if n == 'reportes' %}activo{% endif %}"><i>📊</i>Reportes</a>

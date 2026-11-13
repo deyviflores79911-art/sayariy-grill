@@ -31,7 +31,7 @@
           <td>{{ v.numero }}</td>
           <td>{{ v.fecha_hora|time:"H:i" }}</td>
           <td style="font-size:.9rem">{% for i in v.items.all %}{{ i.cantidad }}× {{ i.nombre_producto }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-          <td>{{ v.destino }}</td>
+          <td>{{ v.destino }}{% if v.cliente %}<div class="tenue" style="font-size:.85rem">{{ v.cliente }}</div>{% endif %}{% if not v.anulada %}<div>{% if v.cocina_estado == "pendiente" %}<span class="chip chip-cocina">🍳 En cocina</span>{% elif v.listo_en %}<span class="chip verde">✔ Listo</span>{% endif %}</div>{% endif %}</td>
           <td>{{ v.get_metodo_pago_display }}</td>
           <td class="der">{{ v.total|bs }}</td>
           <td class="no-tachar der" style="white-space:nowrap">

@@ -2,7 +2,6 @@ import json
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -11,10 +10,10 @@ from django.views.decorators.http import require_POST
 
 from ..forms import AbrirCajaForm, CerrarCajaForm
 from ..models import Categoria, Configuracion, Producto, TurnoCaja, Venta, VentaItem
-from .comun import verificar_pin_admin
+from .comun import vendedor_required, verificar_pin_admin
 
 
-@login_required
+@vendedor_required
 def caja_abrir(request):
     if request.user.turno_abierto():
         return redirect("venta")
@@ -29,7 +28,7 @@ def caja_abrir(request):
     return render(request, "pos/caja_abrir.html", {"form": form})
 
 
-@login_required
+@vendedor_required
 def caja_cerrar(request):
     turno = request.user.turno_abierto()
     if not turno:
@@ -42,7 +41,7 @@ def caja_cerrar(request):
     return render(request, "pos/caja_cerrar.html", {"turno": turno, "c": turno.calcular(), "form": form})
 
 
-@login_required
+@vendedor_required
 def cierre_detalle(request, pk):
     turno = get_object_or_404(TurnoCaja.objects.select_related("usuario"), pk=pk)
     if not request.user.es_admin and turno.usuario_id != request.user.pk:
@@ -54,7 +53,7 @@ def cierre_detalle(request, pk):
     })
 
 
-@login_required
+@vendedor_required
 def venta(request):
     turno = request.user.turno_abierto()
     if not turno:
@@ -78,7 +77,7 @@ def _error(msg, status=400):
     return JsonResponse({"ok": False, "error": msg}, status=status)
 
 
-@login_required
+@vendedor_required
 @require_POST
 def venta_confirmar(request):
     turno = request.user.turno_abierto()
@@ -90,7 +89,7 @@ def venta_confirmar(request):
         if not items:
             return _error("El pedido está vacío.")
         ids = [int(i["id"]) for i in items]
-        productos = Producto.objects.in_bulk(ids)
+        productos = Producto.objects.select_related("categoria").in_bulk(ids)
         lineas, total = [], Decimal("0")
         for it in items:
             p = productos.get(int(it["id"]))
@@ -101,7 +100,7 @@ def venta_confirmar(request):
                 return _error("Cantidad no válida.")
             sub = p.precio * cant
             total += sub
-            lineas.append((p, cant, sub, str(it.get("nota", "")).strip()[:200]))
+            lineas.append((p, cant, sub, str(it.get("nota", "")).strip()[:200], p.categoria.a_cocina))
 
         metodo = data.get("metodo")
         if metodo not in dict(Venta.METODOS):
@@ -115,6 +114,9 @@ def venta_confirmar(request):
         elif tipo != Venta.LLEVAR:
             return _error("Elija mesa o para llevar.")
 
+        cliente = str(data.get("cliente") or "").strip()[:80]
+        nota = str(data.get("nota") or "").strip()[:300]
+
         recibido = cambio = None
         if metodo == Venta.EFECTIVO:
             recibido = Decimal(str(data.get("recibido"))).quantize(Decimal("0.01"))
@@ -127,17 +129,18 @@ def venta_confirmar(request):
     with transaction.atomic():
         v = Venta.objects.create(
             turno=turno, usuario=request.user, tipo=tipo, mesa=mesa, metodo_pago=metodo,
-            total=total, monto_recibido=recibido, cambio=cambio,
+            total=total, monto_recibido=recibido, cambio=cambio, cliente=cliente, nota=nota,
+            cocina_estado=Venta.PENDIENTE if any(l[4] for l in lineas) else Venta.LISTO,
         )
         VentaItem.objects.bulk_create([
             VentaItem(venta=v, producto=p, nombre_producto=p.nombre, precio_unitario=p.precio,
-                      cantidad=cant, subtotal=sub, nota=nota)
-            for p, cant, sub, nota in lineas
+                      cantidad=cant, subtotal=sub, nota=nota_item, a_cocina=cocina)
+            for p, cant, sub, nota_item, cocina in lineas
         ])
     return JsonResponse({"ok": True, "url": reverse("ticket", args=[v.pk])})
 
 
-@login_required
+@vendedor_required
 def ticket(request, pk):
     v = get_object_or_404(Venta.objects.select_related("usuario"), pk=pk)
     if not request.user.es_admin and v.usuario_id != request.user.pk:
@@ -145,7 +148,7 @@ def ticket(request, pk):
     return render(request, "pos/ticket.html", {"v": v, "items": v.items.all()})
 
 
-@login_required
+@vendedor_required
 def mis_ventas(request):
     turno = request.user.turno_abierto()
     ventas = turno.ventas.prefetch_related("items") if turno else Venta.objects.none()
@@ -154,7 +157,7 @@ def mis_ventas(request):
     })
 
 
-@login_required
+@vendedor_required
 @require_POST
 def venta_anular(request, pk):
     v = get_object_or_404(Venta, pk=pk)

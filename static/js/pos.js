@@ -90,6 +90,7 @@
 
   function reiniciar() {
     estado.lineas = []; estado.tipo = 'llevar'; estado.mesa = null; estado.metodo = null;
+    $('cliente').value = ''; $('nota-pedido').value = '';
     pintar();
   }
 
@@ -151,6 +152,7 @@
     $('cobro-destino').textContent = estado.tipo === 'mesa' ? `Mesa ${estado.mesa}` : 'Para llevar';
     $('recibido').value = '';
     $('cobro-error').classList.add('oculto');
+    setTimeout(() => $('cliente').focus(), 50);
     // Billetes sugeridos: exacto + billetes mayores al total
     const t = total() / 100;
     const opciones = [t, ...[10, 20, 50, 100, 200].filter(b => b > t)].slice(0, 6);
@@ -198,6 +200,7 @@
         body: JSON.stringify({
           items: estado.lineas.map(l => ({ id: l.id, cantidad: l.cantidad, nota: l.nota })),
           tipo: estado.tipo, mesa: estado.mesa, metodo: estado.metodo,
+          cliente: $('cliente').value, nota: $('nota-pedido').value,
           recibido: estado.metodo === 'efectivo' ? $('recibido').value : null,
         }),
       });

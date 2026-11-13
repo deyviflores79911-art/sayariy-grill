@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import admin, caja, comun, reportes
+from .views import admin, caja, cocina, comun, reportes
 
 urlpatterns = [
     path("", comun.inicio, name="inicio"),
@@ -16,6 +16,11 @@ urlpatterns = [
     path("ticket/<int:pk>/", caja.ticket, name="ticket"),
     path("mis-ventas/", caja.mis_ventas, name="mis_ventas"),
     path("venta/<int:pk>/anular/", caja.venta_anular, name="venta_anular"),
+    # Cocina
+    path("cocina/", cocina.cocina, name="cocina"),
+    path("cocina/pedidos/", cocina.cocina_pedidos, name="cocina_pedidos"),
+    path("cocina/<int:pk>/listo/", cocina.cocina_listo, name="cocina_listo"),
+    path("cocina/<int:pk>/deshacer/", cocina.cocina_deshacer, name="cocina_deshacer"),
     # Administración
     path("admin/", admin.panel, name="panel"),
     path("admin/productos/", admin.productos, name="productos"),

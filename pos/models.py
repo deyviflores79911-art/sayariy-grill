@@ -15,7 +15,8 @@ CERO = Decimal("0.00")
 class Usuario(AbstractUser):
     ADMIN = "admin"
     TRABAJADOR = "trabajador"
-    ROLES = [(ADMIN, "Administrador"), (TRABAJADOR, "Trabajador")]
+    COCINA = "cocina"
+    ROLES = [(ADMIN, "Administradora"), (TRABAJADOR, "Cajero/a"), (COCINA, "Cocina")]
 
     rol = models.CharField(max_length=20, choices=ROLES, default=TRABAJADOR)
     pin = models.CharField("PIN (cifrado)", max_length=128, blank=True)
@@ -32,6 +33,10 @@ class Usuario(AbstractUser):
     @property
     def es_admin(self):
         return self.rol == self.ADMIN
+
+    @property
+    def es_cocina(self):
+        return self.rol == self.COCINA
 
     @property
     def nombre(self):
@@ -62,6 +67,8 @@ class Categoria(models.Model):
     nombre = models.CharField(max_length=60, unique=True)
     orden = models.PositiveSmallIntegerField(default=0, help_text="Menor número aparece primero")
     activo = models.BooleanField(default=True)
+    a_cocina = models.BooleanField("se prepara en cocina", default=True,
+                                   help_text="Desmarque para bebidas u otros productos que entrega la caja.")
 
     class Meta:
         ordering = ["orden", "nombre"]
@@ -169,12 +176,22 @@ class Venta(models.Model):
     VALIDA = "valida"
     ANULADA = "anulada"
     ESTADOS = [(VALIDA, "Válida"), (ANULADA, "Anulada")]
+    PENDIENTE = "pendiente"
+    LISTO = "listo"
+    COCINA_ESTADOS = [(PENDIENTE, "En cocina"), (LISTO, "Listo")]
 
     turno = models.ForeignKey(TurnoCaja, on_delete=models.PROTECT, related_name="ventas")
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="ventas")
     fecha_hora = models.DateTimeField(default=timezone.now, db_index=True)
     tipo = models.CharField(max_length=10, choices=TIPOS, default=LLEVAR)
     mesa = models.PositiveSmallIntegerField(null=True, blank=True)
+    cliente = models.CharField("nombre del cliente", max_length=80, blank=True)
+    nota = models.CharField("nota del pedido", max_length=300, blank=True)
+    cocina_estado = models.CharField(max_length=10, choices=COCINA_ESTADOS, default=LISTO, db_index=True)
+    listo_en = models.DateTimeField(null=True, blank=True)
+    listo_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name="+"
+    )
     metodo_pago = models.CharField(max_length=10, choices=METODOS)
     total = models.DecimalField(max_digits=12, decimal_places=2)
     monto_recibido = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
@@ -225,6 +242,7 @@ class VentaItem(models.Model):
     cantidad = models.PositiveIntegerField()
     subtotal = models.DecimalField(max_digits=12, decimal_places=2)
     nota = models.CharField(max_length=200, blank=True)
+    a_cocina = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.cantidad} x {self.nombre_producto}"

@@ -21,7 +21,7 @@
             data-id="{{ u.pk }}" data-nombre="{{ u.nombre }}" data-admin="{{ u.es_admin|yesno:'1,0' }}">
       <div class="av">{{ u.nombre|first|upper }}</div>
       <div><strong>{{ u.nombre }}</strong></div>
-      <div class="rol">{{ u.es_admin|yesno:"Administradora,Trabajador" }}</div>
+      <div class="rol">{{ u.get_rol_display }}</div>
     </button>
     {% empty %}
     <p class="tenue">No hay usuarios. Ejecute <code>python manage.py crear_admin</code>.</p>

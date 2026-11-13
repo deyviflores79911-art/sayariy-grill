@@ -57,7 +57,8 @@ class Command(BaseCommand):
         Categoria.objects.all().delete()
 
         for orden, (cat, productos) in enumerate(MENU):
-            c = Categoria.objects.create(nombre=cat, orden=orden)
+            c = Categoria.objects.create(nombre=cat, orden=orden,
+                                         a_cocina=cat not in ("Refrescos", "Sodas", "Cervezas"))
             for nombre, precio, foto in productos:
                 p = Producto(nombre=nombre, categoria=c,
                              precio=Decimal(precio or "0"), activo=precio is not None)

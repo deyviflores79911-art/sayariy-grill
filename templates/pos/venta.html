@@ -63,6 +63,14 @@
 <dialog id="dlg-cobro">
   <h2>Cobrar · <span id="cobro-destino"></span></h2>
   <div class="total-fila"><span class="tenue">TOTAL A COBRAR</span><span class="v" id="cobro-total"></span></div>
+  <div class="campo" style="margin-bottom:10px">
+    <label for="cliente">Nombre del cliente</label>
+    <input type="text" id="cliente" maxlength="80" autocomplete="off" placeholder="Ej.: Doña Rosa">
+  </div>
+  <div class="campo" style="margin-bottom:6px">
+    <label for="nota-pedido">Nota para cocina (todo el pedido)</label>
+    <input type="text" id="nota-pedido" maxlength="300" autocomplete="off" placeholder="Ej.: sin arroz, todo para llevar">
+  </div>
   <div class="metodos" id="metodos">
     <button type="button" data-m="efectivo">💵 Efectivo</button>
     <button type="button" data-m="qr">📱 QR</button>
@@ -87,7 +95,7 @@
     mesas: {{ num_mesas }},
     urlConfirmar: "{% url 'venta_confirmar' %}",
     csrf: "{{ csrf_token }}",
-    notas: ["Coca Cola", "Fanta", "Sprite", "Salviet", "Aquarius", "arroz chaufa", "arroz primavera", "con tallarín", "con papitas", "sin ensalada", "sin cebolla", "sin ají", "poco picante", "bien cocido", "sin hielo"],
+    notas: ["sin arroz", "Coca Cola", "Fanta", "Sprite", "Salviet", "Aquarius", "arroz chaufa", "arroz primavera", "con tallarín", "con papitas", "sin ensalada", "sin cebolla", "sin ají", "poco picante", "bien cocido", "sin hielo"],
   };
 </script>
 {% endblock %}

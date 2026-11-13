@@ -171,3 +171,63 @@ class DispositivoTests(TestCase):
             self.client.post(reverse("equipo"), {"usuario": "admin", "password": "mal"})
         r = self.client.post(reverse("equipo"), {"usuario": "admin", "password": "secreto123"})
         self.assertContains(r, "Demasiados intentos")
+
+
+class CocinaTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.cajera = Usuario.objects.create(username="graciela", first_name="Graciela")
+        self.cajera.set_pin("1111")
+        self.cajera.save()
+        self.cocinero = Usuario.objects.create(username="cocina", first_name="Cocinero", rol=Usuario.COCINA)
+        self.cocinero.set_pin("2222")
+        self.cocinero.save()
+        platos = Categoria.objects.create(nombre="Platos")
+        sodas = Categoria.objects.create(nombre="Sodas", a_cocina=False)
+        self.pollo = Producto.objects.create(nombre="Cuarto pecho", categoria=platos, precio=Decimal("30"))
+        self.soda = Producto.objects.create(nombre="Soda personal", categoria=sodas, precio=Decimal("7"))
+
+    def vender(self, items, **extra):
+        data = {"items": items, "tipo": "llevar", "metodo": "qr"}
+        data.update(extra)
+        return self.client.post(reverse("venta_confirmar"), json.dumps(data), content_type="application/json")
+
+    def test_flujo_cocina(self):
+        self.client.force_login(self.cajera)
+        self.client.post(reverse("caja_abrir"), {"monto_inicial": "0"})
+        self.vender([{"id": self.pollo.pk, "cantidad": 1, "nota": "sin arroz"}, {"id": self.soda.pk, "cantidad": 1}],
+                    cliente="Doña Rosa", nota="todo para llevar")
+        self.vender([{"id": self.soda.pk, "cantidad": 2}])  # solo bebida: no va a cocina
+        con_plato, solo_soda = Venta.objects.order_by("pk")
+        self.assertEqual(con_plato.cliente, "Doña Rosa")
+        self.assertEqual(con_plato.nota, "todo para llevar")
+        self.assertEqual(con_plato.cocina_estado, Venta.PENDIENTE)
+        self.assertEqual(solo_soda.cocina_estado, Venta.LISTO)
+        self.assertContains(self.client.get(reverse("ticket", args=[con_plato.pk])), "Doña Rosa")
+
+        self.client.force_login(self.cocinero)
+        self.assertRedirects(self.client.get(reverse("inicio")), reverse("cocina"), fetch_redirect_response=False)
+        self.assertRedirects(self.client.get(reverse("venta")), reverse("cocina"))
+        self.assertRedirects(self.client.get(reverse("reportes")), reverse("inicio"), fetch_redirect_response=False)
+        d = self.client.get(reverse("cocina_pedidos")).json()
+        self.assertEqual([p["id"] for p in d["pendientes"]], [con_plato.pk])
+        pedido = d["pendientes"][0]
+        self.assertEqual(pedido["cliente"], "Doña Rosa")
+        self.assertEqual(pedido["items"], [{"cant": 1, "nombre": "Cuarto pecho", "nota": "sin arroz"}])  # sin la soda
+
+        self.client.post(reverse("cocina_listo", args=[con_plato.pk]))
+        con_plato.refresh_from_db()
+        self.assertEqual(con_plato.cocina_estado, Venta.LISTO)
+        self.assertEqual(con_plato.listo_por, self.cocinero)
+        d = self.client.get(reverse("cocina_pedidos")).json()
+        self.assertEqual(d["pendientes"], [])
+        self.assertEqual([p["id"] for p in d["listos"]], [con_plato.pk])
+        self.client.post(reverse("cocina_deshacer", args=[con_plato.pk]))
+        self.assertEqual(len(self.client.get(reverse("cocina_pedidos")).json()["pendientes"]), 1)
+
+    def test_venta_anulada_sale_de_cocina(self):
+        self.client.force_login(self.cajera)
+        self.client.post(reverse("caja_abrir"), {"monto_inicial": "0"})
+        self.vender([{"id": self.pollo.pk, "cantidad": 1}])
+        Venta.objects.get().anular("error", por=self.cajera)
+        self.assertEqual(self.client.get(reverse("cocina_pedidos")).json()["pendientes"], [])

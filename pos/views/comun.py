@@ -26,6 +26,17 @@ def admin_required(view):
     return login_required(envoltura)
 
 
+def vendedor_required(view):
+    """Caja y ventas: administradora y cajeros. La cocina va a su pantalla."""
+    @wraps(view)
+    def envoltura(request, *args, **kwargs):
+        if request.user.es_cocina:
+            return redirect("cocina")
+        return view(request, *args, **kwargs)
+
+    return login_required(envoltura)
+
+
 def intentos_bloqueados(clave):
     return cache.get(clave, 0) >= MAX_INTENTOS
 
@@ -89,6 +100,8 @@ def logout_view(request):
 def inicio(request):
     if request.user.es_admin:
         return redirect("panel")
+    if request.user.es_cocina:
+        return redirect("cocina")
     return redirect("venta")
 
 

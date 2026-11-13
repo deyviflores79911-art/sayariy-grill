@@ -33,7 +33,7 @@
       <td style="white-space:nowrap">{{ v.fecha_hora|fecha }}</td>
       <td>{{ v.usuario }}</td>
       <td style="font-size:.9rem">{% for i in v.items.all %}{{ i.cantidad }}× {{ i.nombre_producto }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-      <td>{{ v.destino }}</td>
+      <td>{{ v.destino }}{% if v.cliente %}<div class="tenue" style="font-size:.85rem">{{ v.cliente }}</div>{% endif %}</td>
       <td>{{ v.get_metodo_pago_display }}</td>
       <td class="der">{{ v.total|bs }}</td>
       <td class="no-tachar der">
