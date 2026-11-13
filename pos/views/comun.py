@@ -1,6 +1,7 @@
 import hashlib
 from functools import wraps
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -98,7 +99,7 @@ def _ip(request):
 
 def equipo_view(request):
     """Pantalla para equipos no autorizados: la administradora entra o autoriza el equipo."""
-    if getattr(request, "dispositivo", None):
+    if not settings.REQUIERE_DISPOSITIVO or getattr(request, "dispositivo", None):
         return redirect("login")
     error = None
     if request.method == "POST":
